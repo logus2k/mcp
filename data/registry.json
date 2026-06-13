@@ -1,0 +1,34 @@
+{
+  "tools": {
+    "job2cool/web_search": {
+      "name": "web_search",
+      "app": "job2cool",
+      "display_name": "Web Search",
+      "description": "Search the web and return titles, URLs and snippets. Backed by a stealth browser (Camoufox) in the isolated websearch service.",
+      "impl": "web_search",
+      "tier": "read",
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The web search query"
+          },
+          "max_results": {
+            "type": "integer",
+            "description": "Maximum results to return (1-25)",
+            "default": 5
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "config": {},
+      "created_at": "2026-06-13T17:56:38.890983+00:00",
+      "updated_at": "2026-06-13T17:56:38.890983+00:00"
+    }
+  },
+  "skills": {}
+}

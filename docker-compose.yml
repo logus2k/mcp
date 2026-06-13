@@ -1,0 +1,25 @@
+services:
+  mcp-service:
+    build: .
+    image: mcp-service:0.1.0
+    container_name: mcp-service
+    ports:
+      - "4950:8080"            # host:container — direct probing
+    environment:
+      MCP_DATA_DIR: /data
+      # Reaches the isolated browser service over mcp_internal.
+      WEBSEARCH_URL: "http://websearch_server:8080"
+      # Admin (write) bearer token. Set in ./.env; empty = open (dev only).
+      MCP_ADMIN_TOKEN: "${MCP_ADMIN_TOKEN:-}"
+    volumes:
+      - ./data:/data           # JSON registry persistence
+    networks:
+      - noted-network          # apps (job2cool) reach mcp-service here
+      - mcp_internal           # mcp-service reaches websearch_server here
+    restart: unless-stopped
+
+networks:
+  noted-network:
+    external: true
+  mcp_internal:
+    external: true
