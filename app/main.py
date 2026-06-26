@@ -15,6 +15,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -118,6 +119,24 @@ async def health():
         "admin_auth": "bearer" if ADMIN_TOKEN else "open",
         "experimental": _REGISTRY_CAPABILITY,
     })
+
+
+@app.get("/backends/health")
+async def backends_health():
+    """Liveness of the tool backends mcp-service fronts. websearch_server lives on
+    mcp_internal and is unreachable from other networks (e.g. job2cool-backend),
+    so this endpoint lets them observe it THROUGH mcp-service. Side-effect-free —
+    pings the backend's /health only (no real web search). Reads stay open."""
+    async def _probe(url: str) -> str:
+        try:
+            async with httpx.AsyncClient(timeout=4) as c:
+                r = await c.get(url)
+            return "degraded" if r.status_code >= 500 else "ok"
+        except Exception:  # noqa: BLE001 — any connect/timeout means unreachable
+            return "down"
+    return JSONResponse({"backends": {
+        "websearch_server": await _probe(f"{toolimpl.WEBSEARCH_URL}/health"),
+    }})
 
 
 # ── tools (management REST) ──────────────────────────────────────────────────

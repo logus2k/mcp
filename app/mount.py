@@ -33,6 +33,10 @@ def mount_mcp(app: FastAPI, server: Server) -> StreamableHTTPSessionManager:
         # path to root for the (path-agnostic, stateless) session manager.
         raw = scope.get("path", "") or "/"
         segs = [p for p in raw.split("/") if p]
+        # Path may or may not retain the "/mcp" mount prefix depending on how
+        # it was routed; drop a leading "mcp" so segs[0] is the app name.
+        if segs and segs[0] == "mcp":
+            segs = segs[1:]
         app_name = segs[0] if segs else None
         token = current_app.set(app_name)
         scope = dict(scope)
