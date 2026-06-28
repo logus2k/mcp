@@ -15,12 +15,11 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-import httpx
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app import registry, toolimpl
+from app import admin, registry, toolimpl
 from app.mcpserver import create_mcp_server
 from app.mount import mount_mcp
 
@@ -83,6 +82,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="mcp-service", version="0.1.0", lifespan=lifespan)
 _session_manager = mount_mcp(app, _mcp_server)
+app.include_router(admin.router)  # read-only browser view at /admin
 
 
 # ── models ─────────────────────────────────────────────────────────────────
@@ -103,6 +103,10 @@ class SkillIn(BaseModel):
     triggers: list[str] = []
     priority: int = 100
     enabled: bool = True
+
+
+class EnabledIn(BaseModel):
+    enabled: bool
 
 
 # ── health ──────────────────────────────────────────────────────────────────
@@ -126,17 +130,9 @@ async def backends_health():
     """Liveness of the tool backends mcp-service fronts. websearch_server lives on
     mcp_internal and is unreachable from other networks (e.g. job2cool-backend),
     so this endpoint lets them observe it THROUGH mcp-service. Side-effect-free —
-    pings the backend's /health only (no real web search). Reads stay open."""
-    async def _probe(url: str) -> str:
-        try:
-            async with httpx.AsyncClient(timeout=4) as c:
-                r = await c.get(url)
-            return "degraded" if r.status_code >= 500 else "ok"
-        except Exception:  # noqa: BLE001 — any connect/timeout means unreachable
-            return "down"
-    return JSONResponse({"backends": {
-        "websearch_server": await _probe(f"{toolimpl.WEBSEARCH_URL}/health"),
-    }})
+    pings the backend's /health only (no real web search). Reads stay open.
+    The probe lives in app.admin so the /admin/health view reuses it."""
+    return JSONResponse({"backends": await admin.backends_status()})
 
 
 # ── tools (management REST) ──────────────────────────────────────────────────
@@ -166,7 +162,28 @@ async def tool_get(name: str, app: str = Query("job2cool")):
 async def tool_put(name: str, body: ToolIn, app: str = Query("job2cool"),
                    authorization: str | None = Header(None)):
     _require_admin(authorization)
-    return JSONResponse(registry.put_tool(app, name, body.model_dump()))
+    data = body.model_dump()
+    # Server-executed tools must bind to a shipped impl; client-executed tools
+    # (config.execution == "client", e.g. tutor UI actions) carry a client-side
+    # impl id that this service never runs, so skip the check for them.
+    if (data.get("config") or {}).get("execution", "server") != "client" \
+            and data["impl"] not in toolimpl.IMPLS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"unknown impl '{data['impl']}'; valid: {sorted(toolimpl.IMPLS)}",
+        )
+    return JSONResponse(registry.put_tool(app, name, data))
+
+
+@app.patch("/tools/{name}/enabled")
+async def tool_set_enabled(name: str, body: EnabledIn, app: str = Query("job2cool"),
+                           authorization: str | None = Header(None)):
+    _require_admin(authorization)
+    if not registry.get_tool(app, name):
+        return JSONResponse({"error": "not found"}, status_code=404)
+    # Partial update — put_tool merges over the existing record, preserving impl,
+    # schema, config, timestamps; only `enabled` changes.
+    return JSONResponse(registry.put_tool(app, name, {"enabled": body.enabled}))
 
 
 @app.delete("/tools/{name}")
@@ -215,6 +232,15 @@ async def skill_put(name: str, body: SkillIn, app: str = Query("job2cool"),
                     authorization: str | None = Header(None)):
     _require_admin(authorization)
     return JSONResponse(registry.put_skill(app, name, body.model_dump()))
+
+
+@app.patch("/skills/{name}/enabled")
+async def skill_set_enabled(name: str, body: EnabledIn, app: str = Query("job2cool"),
+                            authorization: str | None = Header(None)):
+    _require_admin(authorization)
+    if not registry.get_skill(app, name):
+        return JSONResponse({"error": "not found"}, status_code=404)
+    return JSONResponse(registry.put_skill(app, name, {"enabled": body.enabled}))
 
 
 @app.delete("/skills/{name}")

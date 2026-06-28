@@ -22,9 +22,16 @@ Shared **tool + skill host** with two faces:
 - `mcp_internal` — mcp-service reaches the isolated `websearch_server`.
   `web_search` delegates to `websearch_server /search`.
 
+## Admin area (read-only)
+Browser view over the whole registry (all apps at once) at **`/admin`** — search,
+filter by app, toggle enabled-only, expand each tool's `input_schema`/`config`.
+Backed by `GET /admin/registry` (aggregate JSON). Consult-only; authoring stays on
+the CRUD REST face below.
+
 ## REST quick-ref (default `?app=job2cool`)
 ```
 GET    /health
+GET    /admin                 GET /admin/registry      (read-only browser view)
 GET    /tools                 GET /tools/manifest
 PUT    /tools/{name}          DELETE /tools/{name}
 POST   /tools/{name}/invoke   {"args": {...}}
