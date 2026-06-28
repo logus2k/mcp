@@ -4,11 +4,18 @@ registering it in IMPLS — never by accepting code from the UI.
 """
 from __future__ import annotations
 
+import html as _html
 import os
+import re
 
 import httpx
 
 WEBSEARCH_URL = os.getenv("WEBSEARCH_URL", "http://websearch_server:8080").rstrip("/")
+
+_SCRIPT_RE = re.compile(r"<(script|style)[^>]*>.*?</\1>", re.DOTALL | re.IGNORECASE)
+_TAG_RE = re.compile(r"<[^>]+>")
+_WS_RE = re.compile(r"[ \t\r\f\v]+")
+_BLANKLINES_RE = re.compile(r"\n\s*\n+")
 
 
 async def web_search(args: dict, config: dict) -> dict:
@@ -25,8 +32,60 @@ async def web_search(args: dict, config: dict) -> dict:
     return r.json()
 
 
+async def fetch_url(args: dict, config: dict) -> str:
+    """Fetch a web URL and return its readable text (HTML stripped)."""
+    url = (args.get("url") or "").strip()
+    if not url:
+        raise ValueError("url is required")
+    max_chars = int(args.get("max_chars") or config.get("max_chars") or 10000)
+    async with httpx.AsyncClient(
+        timeout=30, follow_redirects=True,
+        headers={"User-Agent": "Mozilla/5.0 (mcp-service fetch_url)"},
+    ) as client:
+        r = await client.get(url)
+    if r.status_code != 200:
+        raise RuntimeError(f"fetch_url {r.status_code} for {url}: {r.text[:200]}")
+    text = _SCRIPT_RE.sub(" ", r.text)
+    text = _TAG_RE.sub(" ", text)
+    text = _html.unescape(text)
+    text = _WS_RE.sub(" ", text)
+    text = _BLANKLINES_RE.sub("\n\n", text).strip()
+    return text[:max_chars]
+
+
+async def newsapi_search(args: dict, config: dict) -> str:
+    """Search NewsAPI for recent articles. Key from config['api_key'] or env
+    NEWSAPI_KEY (kept out of the registry/source — env only)."""
+    query = (args.get("query") or "").strip()
+    if not query:
+        raise ValueError("query is required")
+    key = config.get("api_key") or os.getenv("NEWSAPI_KEY") or ""
+    if not key:
+        raise RuntimeError("NEWSAPI_KEY is not configured (set it in the environment)")
+    page_size = int(args.get("page_size") or config.get("page_size") or 10)
+    async with httpx.AsyncClient(timeout=30) as client:
+        r = await client.get(
+            "https://newsapi.org/v2/everything",
+            params={"q": query, "pageSize": page_size,
+                    "sortBy": "publishedAt", "language": "en"},
+            headers={"X-Api-Key": key},
+        )
+    data = r.json()
+    if data.get("status") != "ok":
+        raise RuntimeError(f"NewsAPI error: {data.get('message') or data}")
+    articles = data.get("articles", [])
+    lines = [f"NewsAPI results for {query!r} ({data.get('totalResults', 0)} total):", ""]
+    for i, a in enumerate(articles, 1):
+        title = (a.get("title") or "").strip()
+        src = (a.get("source") or {}).get("name") or ""
+        lines.append(f"{i}. {title} — {a.get('url', '')} ({src})")
+    return "\n".join(lines)
+
+
 IMPLS = {
     "web_search": web_search,
+    "fetch_url": fetch_url,
+    "newsapi_search": newsapi_search,
 }
 
 

@@ -275,6 +275,58 @@
       "app": "tutor",
       "updated_at": "2026-06-24T19:01:36.508667+00:00",
       "created_at": "2026-06-24T19:01:36.508667+00:00"
+    },
+    "agent_runtime/newsapi_search": {
+      "display_name": "NewsAPI Search",
+      "description": "Search NewsAPI for recent articles matching a keyword or phrase, returning the matching articles and the total result count.",
+      "impl": "newsapi_search",
+      "tier": "read",
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Keyword or phrase to search for"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "config": {},
+      "name": "newsapi_search",
+      "app": "agent_runtime",
+      "updated_at": "2026-06-28T02:28:34.089442+00:00",
+      "created_at": "2026-06-28T02:28:34.089442+00:00"
+    },
+    "agent_runtime/fetch_url": {
+      "display_name": "Fetch URL",
+      "description": "Fetch the content of a web URL. Returns the page text (HTML stripped to readable text).",
+      "impl": "fetch_url",
+      "tier": "read",
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to fetch"
+          },
+          "max_chars": {
+            "type": "integer",
+            "description": "Maximum characters to return (default 10000)"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "config": {},
+      "name": "fetch_url",
+      "app": "agent_runtime",
+      "updated_at": "2026-06-28T02:28:34.092107+00:00",
+      "created_at": "2026-06-28T02:28:34.092107+00:00"
     }
   },
   "skills": {}

@@ -11,6 +11,10 @@ services:
       WEBSEARCH_URL: "http://websearch_server:8080"
       # Admin (write) bearer token. Set in ./.env; empty = open (dev only).
       MCP_ADMIN_TOKEN: "${MCP_ADMIN_TOKEN:-}"
+      # NewsAPI key for the newsapi_search tool. Supplied via the environment
+      # (NOT committed — .env and registry.json are git-tracked here). Empty = the
+      # tool returns a clear "not configured" error.
+      NEWSAPI_KEY: "${NEWSAPI_KEY:-}"
     volumes:
       - ./data:/data           # JSON registry persistence
     networks:
