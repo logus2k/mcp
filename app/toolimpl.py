@@ -62,23 +62,32 @@ async def newsapi_search(args: dict, config: dict) -> str:
     key = config.get("api_key") or os.getenv("NEWSAPI_KEY") or ""
     if not key:
         raise RuntimeError("NEWSAPI_KEY is not configured (set it in the environment)")
-    page_size = int(args.get("page_size") or config.get("page_size") or 10)
+    page_size = int(args.get("page_size") or config.get("page_size") or 20)
+    sort_by = args.get("sort_by") or config.get("sort_by") or "relevancy"
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.get(
             "https://newsapi.org/v2/everything",
             params={"q": query, "pageSize": page_size,
-                    "sortBy": "publishedAt", "language": "en"},
+                    "sortBy": sort_by, "language": "en"},
             headers={"X-Api-Key": key},
         )
     data = r.json()
     if data.get("status") != "ok":
         raise RuntimeError(f"NewsAPI error: {data.get('message') or data}")
-    articles = data.get("articles", [])
+    # Dedupe by URL (and by title) — NewsAPI returns syndicated duplicates.
+    seen: set[str] = set()
     lines = [f"NewsAPI results for {query!r} ({data.get('totalResults', 0)} total):", ""]
-    for i, a in enumerate(articles, 1):
+    n = 0
+    for a in data.get("articles", []):
+        url = a.get("url") or ""
         title = (a.get("title") or "").strip()
+        key_ = url or title
+        if not key_ or key_ in seen:
+            continue
+        seen.add(key_)
+        n += 1
         src = (a.get("source") or {}).get("name") or ""
-        lines.append(f"{i}. {title} — {a.get('url', '')} ({src})")
+        lines.append(f"{n}. {title} — {url} ({src})")
     return "\n".join(lines)
 
 
