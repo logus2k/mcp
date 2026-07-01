@@ -11,10 +11,12 @@ services:
       WEBSEARCH_URL: "http://websearch_server:8080"
       # Admin (write) bearer token. Set in ./.env; empty = open (dev only).
       MCP_ADMIN_TOKEN: "${MCP_ADMIN_TOKEN:-}"
-      # NewsAPI key for the newsapi_search tool. Supplied via the environment
-      # (NOT committed — .env and registry.json are git-tracked here). Empty = the
-      # tool returns a clear "not configured" error.
-      NEWSAPI_KEY: "${NEWSAPI_KEY:-}"
+    # NewsAPI key for the newsapi_search tool lives in the GITIGNORED secrets.env
+    # (mcp's .env is git-tracked, so the secret can't go there). This survives a
+    # plain `docker compose up` with no host export. Empty/missing => the tool
+    # returns a clear "not configured" error.
+    env_file:
+      - secrets.env
     volumes:
       - ./data:/data           # JSON registry persistence
     networks:
