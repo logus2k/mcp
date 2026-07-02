@@ -7,6 +7,7 @@ from __future__ import annotations
 import html as _html
 import os
 import re
+from datetime import datetime, timedelta, timezone
 
 import httpx
 
@@ -63,12 +64,17 @@ async def newsapi_search(args: dict, config: dict) -> str:
     if not key:
         raise RuntimeError("NEWSAPI_KEY is not configured (set it in the environment)")
     page_size = int(args.get("page_size") or config.get("page_size") or 20)
-    sort_by = args.get("sort_by") or config.get("sort_by") or "relevancy"
+    # Newest-first + a recent window so a DAILY digest returns FRESH news, not the same
+    # top-relevancy all-time hits every day. (Was: sortBy "relevancy" + no date filter,
+    # which returns a stable set day-to-day even with zero caching.)
+    sort_by = args.get("sort_by") or config.get("sort_by") or "publishedAt"
+    days = int(args.get("days") or config.get("days") or 3)
+    from_date = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.get(
             "https://newsapi.org/v2/everything",
-            params={"q": query, "pageSize": page_size,
-                    "sortBy": sort_by, "language": "en"},
+            params={"q": query, "pageSize": page_size, "sortBy": sort_by,
+                    "language": "en", "from": from_date},
             headers={"X-Api-Key": key},
         )
     data = r.json()
