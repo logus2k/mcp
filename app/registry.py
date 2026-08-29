@@ -73,14 +73,52 @@ def _save(reg: dict) -> None:
         os.replace(tmp, REGISTRY_JSON)
 
 
+_NGINX_REGISTER_SEED = {
+    "name": "nginx_register_app",
+    "app": "factory",
+    "display_name": "Register app on the reverse proxy",
+    "description": "Deterministically put a generated app on the domain nginx behind the shared "
+                   "oauth2-proxy: writes a managed per-app location block for the given URL suffix and "
+                   "port, validates the whole config (nginx -t, rolling back on failure) and reloads. "
+                   "admin_only gates to the owner identity; unregister removes the block.",
+    "impl": "nginx_register_app",
+    "tier": "write",
+    "enabled": True,
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "suffix": {"type": "string",
+                       "description": "URL path the app is served at, e.g. 'restaurant-menu-manager'"},
+            "port": {"type": "integer", "description": "the app's deployed host port"},
+            "admin_only": {"type": "boolean", "default": False,
+                           "description": "gate to the single owner identity (/oauth2/auth-admin)"},
+            "public": {"type": "boolean", "default": False,
+                       "description": "serve the base /suffix/ WITHOUT auth (open storefront); combine "
+                                      "with admin_prefix to gate only the admin area"},
+            "admin_prefix": {"type": "string",
+                             "description": "a nested path under /suffix/ (e.g. 'admin') that IS gated; "
+                                            "covers admin pages AND their APIs by prefix (no API leak)"},
+            "unregister": {"type": "boolean", "default": False,
+                           "description": "remove the app's route instead of adding it"},
+        },
+        "required": ["suffix"],
+    },
+    "config": {},
+}
+
+
 def seed() -> None:
     with _LOCK:
         reg = _load()
-        k = _key(_WEB_SEARCH_SEED["app"], _WEB_SEARCH_SEED["name"])
-        if k not in reg["tools"]:
-            rec = dict(_WEB_SEARCH_SEED)
-            rec["created_at"] = rec["updated_at"] = _now()
-            reg["tools"][k] = rec
+        changed = False
+        for s in (_WEB_SEARCH_SEED, _NGINX_REGISTER_SEED):
+            k = _key(s["app"], s["name"])
+            if k not in reg["tools"]:
+                rec = dict(s)
+                rec["created_at"] = rec["updated_at"] = _now()
+                reg["tools"][k] = rec
+                changed = True
+        if changed:
             _save(reg)
 
 

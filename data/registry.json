@@ -327,6 +327,247 @@
       "app": "agent_runtime",
       "updated_at": "2026-06-28T02:28:34.092107+00:00",
       "created_at": "2026-06-28T02:28:34.092107+00:00"
+    },
+    "sdlc/sdlc_collect_evidence": {
+      "display_name": "Collect cell evidence",
+      "description": "Gather the raw evidence for one maturity cell of one project. Measured cells call their sensor (e.g. delivery metrics from a CI job); attested cells return the stored human answer, or report that one is needed.",
+      "impl": "sdlc_collect_evidence",
+      "tier": "read",
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string"
+          },
+          "cell": {
+            "type": "string"
+          },
+          "window_days": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "project",
+          "cell"
+        ]
+      },
+      "config": {},
+      "name": "sdlc_collect_evidence",
+      "app": "sdlc",
+      "updated_at": "2026-07-18T17:09:01.112981+00:00",
+      "created_at": "2026-07-18T17:09:01.112981+00:00"
+    },
+    "sdlc/sdlc_score_cell": {
+      "display_name": "Score cell maturity",
+      "description": "Turn collected evidence into a maturity level 0-4 using the cell scoring specification: level, confidence, per-metric breakdown and the reason the level was reached.",
+      "impl": "sdlc_score_cell",
+      "tier": "read",
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string"
+          },
+          "cell": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": [
+              "object",
+              "string"
+            ],
+            "description": "Output of sdlc_collect_evidence: an object, or the same JSON encoded as a string (which is what a workflow step passes)."
+          }
+        },
+        "required": [
+          "project",
+          "cell",
+          "evidence"
+        ]
+      },
+      "config": {},
+      "name": "sdlc_score_cell",
+      "app": "sdlc",
+      "updated_at": "2026-07-18T17:32:45.502349+00:00",
+      "created_at": "2026-07-18T17:09:01.126192+00:00"
+    },
+    "sdlc/sdlc_state": {
+      "display_name": "Read/write assessment state",
+      "description": "Read or write one project-and-cell assessment record. Writing appends to the history trail and never silently overwrites a human override.",
+      "impl": "sdlc_state",
+      "tier": "write",
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string"
+          },
+          "cell": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string",
+            "enum": [
+              "read",
+              "write",
+              "list"
+            ]
+          },
+          "data": {
+            "type": [
+              "object",
+              "string"
+            ],
+            "description": "For op=write: output of sdlc_score_cell as an object, or the same JSON encoded as a string."
+          }
+        },
+        "required": [
+          "project"
+        ]
+      },
+      "config": {},
+      "name": "sdlc_state",
+      "app": "sdlc",
+      "updated_at": "2026-07-18T17:32:45.507961+00:00",
+      "created_at": "2026-07-18T17:09:01.138327+00:00"
+    },
+    "sdlc/sdlc_advise": {
+      "display_name": "Advise next move",
+      "description": "Rank what a project should do next: for each assessed cell below level 4, the gap weighted by that phase strategic leverage, the specific condition blocking the next level, and the knowledge base own anchor describing that level. Optionally writes the top proposals to the project inbox.",
+      "impl": "sdlc_advise",
+      "tier": "write",
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string"
+          },
+          "top": {
+            "type": "integer",
+            "description": "How many proposals to return (default 3)"
+          },
+          "write_inbox": {
+            "type": "boolean",
+            "description": "Write the proposals into the project inbox (default true)"
+          }
+        },
+        "required": [
+          "project"
+        ]
+      },
+      "config": {},
+      "name": "sdlc_advise",
+      "app": "sdlc",
+      "updated_at": "2026-07-18T19:21:01.658555+00:00",
+      "created_at": "2026-07-18T19:21:01.658555+00:00"
+    },
+    "sdlc/sdlc_answer": {
+      "display_name": "Answer an attested cell",
+      "description": "Record an answer for a cell that cannot be measured, and score it immediately. A human answer is authoritative; an answer supplied by anything else is recorded as inferred, carries its basis, and is flagged as needing confirmation.",
+      "impl": "sdlc_answer",
+      "tier": "write",
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "type": "string"
+          },
+          "cell": {
+            "type": "string"
+          },
+          "level": {
+            "type": "integer",
+            "description": "0-4: which level anchor describes the project"
+          },
+          "by": {
+            "type": "string",
+            "description": "Who answered. Anything other than \"human\" marks the record inferred."
+          },
+          "basis": {
+            "type": "string",
+            "description": "The observable evidence the answer rests on."
+          }
+        },
+        "required": [
+          "project",
+          "cell",
+          "level"
+        ]
+      },
+      "config": {},
+      "name": "sdlc_answer",
+      "app": "sdlc",
+      "updated_at": "2026-07-20T20:14:51.009023+00:00",
+      "created_at": "2026-07-18T19:46:28.504027+00:00"
+    },
+    "job2cool/fetch_url": {
+      "display_name": "Fetch URL",
+      "description": "Fetch a web URL and return its readable text (HTML stripped).",
+      "impl": "fetch_url",
+      "tier": "read",
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "max_chars": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "config": {},
+      "name": "fetch_url",
+      "app": "job2cool",
+      "updated_at": "2026-07-26T16:26:55.988113+00:00",
+      "created_at": "2026-07-26T16:26:55.988113+00:00"
+    },
+    "factory/nginx_register_app": {
+      "name": "nginx_register_app",
+      "app": "factory",
+      "display_name": "Register app on the reverse proxy",
+      "description": "Deterministically put a generated app on the domain nginx behind the shared oauth2-proxy: writes a managed per-app location block for the given URL suffix and port, validates the whole config (nginx -t, rolling back on failure) and reloads. admin_only gates to the owner identity; unregister removes the block.",
+      "impl": "nginx_register_app",
+      "tier": "write",
+      "enabled": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "suffix": {
+            "type": "string",
+            "description": "URL path the app is served at, e.g. 'restaurant-menu-manager'"
+          },
+          "port": {
+            "type": "integer",
+            "description": "the app's deployed host port"
+          },
+          "admin_only": {
+            "type": "boolean",
+            "default": false,
+            "description": "gate to the single owner identity (/oauth2/auth-admin)"
+          },
+          "unregister": {
+            "type": "boolean",
+            "default": false,
+            "description": "remove the app's route instead of adding it"
+          }
+        },
+        "required": [
+          "suffix"
+        ]
+      },
+      "config": {},
+      "created_at": "2026-08-14T13:37:22.055560+00:00",
+      "updated_at": "2026-08-14T13:37:22.055560+00:00"
     }
   },
   "skills": {}

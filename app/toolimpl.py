@@ -103,6 +103,17 @@ IMPLS = {
     "newsapi_search": newsapi_search,
 }
 
+# SDLC Brain tools live in their own module (they are a coherent set with their own
+# data mounts) but register here, so `invoke` stays the single dispatch point.
+from app.toolimpl_sdlc import IMPLS as _SDLC_IMPLS  # noqa: E402
+
+IMPLS.update(_SDLC_IMPLS)
+
+# Deterministic reverse-proxy registration (put an app behind oauth2-proxy on the domain nginx).
+from app.toolimpl_nginx import nginx_register_app as _nginx_register_app  # noqa: E402
+
+IMPLS["nginx_register_app"] = _nginx_register_app
+
 
 async def invoke(impl: str, args: dict, config: dict):
     fn = IMPLS.get(impl)

@@ -7,10 +7,16 @@ services:
       - "4950:8080"            # host:container — direct probing
     environment:
       MCP_DATA_DIR: /data
+      # Where the SDLC Brain tools find the knowledge base and write assessments.
+      SDLC_RO_DIR: /sdlc/ro
+      SDLC_RW_DIR: /sdlc/rw
       # Reaches the isolated browser service over mcp_internal.
       WEBSEARCH_URL: "http://websearch_server:8080"
       # Admin (write) bearer token. Set in ./.env; empty = open (dev only).
       MCP_ADMIN_TOKEN: "${MCP_ADMIN_TOKEN:-}"
+      # nginx_register_app tool: where the proxy's conf is mounted + which container to validate/reload.
+      PROXY_CONF_DIR: /proxy-conf
+      PROXY_CONTAINER: proxy_server
     # NewsAPI key for the newsapi_search tool lives in the GITIGNORED secrets.env
     # (mcp's .env is git-tracked, so the secret can't go there). This survives a
     # plain `docker compose up` with no host export. Empty/missing => the tool
@@ -19,13 +25,37 @@ services:
       - secrets.env
     volumes:
       - ./data:/data           # JSON registry persistence
+      # SDLC Brain tools: the knowledge base is reference material (read-only) and
+      # the assessment state is per-tenant data the tools write. Kept in the sdlc
+      # project so a maturity conclusion sits next to the KB it was judged against.
+      - ${SDLC_RO_DIR_HOST:-../sdlc/data/ro}:/sdlc/ro:ro
+      - ${SDLC_RW_DIR_HOST:-../sdlc/data/rw}:/sdlc/rw
+      # Assessed projects' working trees, READ-ONLY. Scan cells detect a practice by the
+      # artifact that embodies it (tests, ADRs, CI gates), so they must see the source —
+      # and must never be able to touch it.
+      - ${CV_REPO_HOST:-../cv}:/sdlc/repos/cv:ro
+      # The uptime monitor's database, READ-ONLY. Operational outcomes (uptime,
+      # recovery time) come from its heartbeat history; the sensor reads a COPY so
+      # it can never disturb the monitor that production depends on.
+      - ${MONITORING_DATA_HOST:-../monitoring/data}:/sdlc/monitoring:ro
+      # nginx_register_app tool: the domain proxy's conf (rw, writes apps/<suffix>.conf) + the docker
+      # socket (to `docker exec proxy_server nginx -t / -s reload`). This is the sanctioned, validated
+      # way to register a generated app behind oauth2-proxy.
+      - ../proxy_server/conf:/proxy-conf
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - noted-network          # apps (job2cool) reach mcp-service here
       - mcp_internal           # mcp-service reaches websearch_server here
+      - ci-network             # the Brain's delivery sensor reaches Jenkins here
+      - logus2k_network        # the SDLC wall reaches this service to record answers
     restart: unless-stopped
 
 networks:
   noted-network:
     external: true
   mcp_internal:
+    external: true
+  ci-network:
+    external: true
+  logus2k_network:
     external: true
