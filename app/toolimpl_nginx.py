@@ -2,7 +2,7 @@
 
 `nginx_register_app` is the ONE sanctioned, deterministic way to put a generated app on the domain proxy
 behind the shared oauth2-proxy. It writes a MANAGED per-app location block (one file per suffix in the
-proxy's `apps/` include dir), then VALIDATES the whole config (`nginx -t`) and RELOADS — rolling the file
+proxy's conf/ dir as route-<suffix>.conf), then VALIDATES the whole config (`nginx -t`) and RELOADS — rolling the file
 back if validation fails. It never string-edits the main nginx.conf; the change is a single file the tool
 owns, so it is idempotent and reversible. This replaces an agent hand-editing nginx with a validated tool.
 
@@ -26,8 +26,9 @@ import os
 import re
 import subprocess
 
-#: proxy_server/conf mounted here (rw); the tool writes <PROXY_CONF_DIR>/apps/<suffix>.conf, which
-#: nginx.conf includes via `include /etc/nginx/conf-host/apps/*.conf;`.
+#: proxy_server/conf mounted here (rw); the tool writes <PROXY_CONF_DIR>/route-<suffix>.conf,
+#: which nginx.conf includes via `include /etc/nginx/conf-host/route-*.conf;` — one flat
+#: directory, one file per route, so adding a route never rewrites a shared file.
 PROXY_CONF_DIR = os.environ.get("PROXY_CONF_DIR", "/proxy-conf")
 PROXY_CONTAINER = os.environ.get("PROXY_CONTAINER", "proxy_server")
 #: the proxy reaches host-published app ports via the docker host gateway.
@@ -41,7 +42,13 @@ def _slug(s: str) -> str:
     return re.sub(r"-+", "-", s).strip("-")
 
 
-def _location(match: str, port: int, gate: str | None, upstream_path: str = "/") -> str:
+def _upstream_var(suffix: str) -> str:
+    """The nginx variable name holding a container upstream, e.g. $devai_analyst_upstream."""
+    return "$" + _slug(suffix).replace("-", "_") + "_upstream"
+
+
+def _location(match: str, port: int, gate: str | None, upstream_path: str = "/",
+              upstream: str | None = None, suffix: str = "") -> str:
     """One nginx location block for `match` proxying to the app on `port`. `gate` is the oauth2-proxy
     auth_request endpoint (None ⇒ PUBLIC, no auth). `upstream_path` is the proxy_pass target URI: only the
     app SUFFIX is stripped, never a meaningful app path — the base strips `/suffix/` -> `/`, and an admin
@@ -52,8 +59,26 @@ def _location(match: str, port: int, gate: str | None, upstream_path: str = "/")
         lines += [f"    auth_request {gate};",
                   "    error_page 401 = /oauth2/sign_in;",
                   "    auth_request_set $auth_email $upstream_http_x_auth_request_email;"]
-    lines += [f"    proxy_pass http://{APP_UPSTREAM_HOST}:{port}{upstream_path};",
-              "    proxy_http_version 1.1;",
+    if upstream:
+        # A CONTAINER upstream, held in a variable. nginx resolves a literal
+        # proxy_pass host at CONFIG-PARSE TIME, so a container that is down
+        # takes the whole proxy with it; via a variable it is resolved per
+        # request and only this route 502s.
+        #
+        # The cost is that a variable proxy_pass passes the FULL URI — nginx
+        # strips the location prefix only for a literal proxy_pass carrying a
+        # URI — so the prefix is removed with an explicit rewrite. This is the
+        # shape the hand-written Dev.AI routes already use.
+        variable = _upstream_var(suffix)
+        prefix = match.split(" ", 1)[-1].rstrip("/")
+        lines += [f'    set {variable} "http://{upstream}";',
+                  f"    rewrite ^{prefix}/(.*)$ {upstream_path}$1 break;",
+                  f"    proxy_pass {variable};",
+                  "    proxy_http_version 1.1;"]
+    else:
+        lines += [f"    proxy_pass http://{APP_UPSTREAM_HOST}:{port}{upstream_path};",
+                  "    proxy_http_version 1.1;"]
+    lines += [
               "    client_max_body_size 50m;",
               "    proxy_set_header Host $host;",
               "    proxy_set_header X-Real-IP $remote_addr;",
@@ -66,24 +91,59 @@ def _location(match: str, port: int, gate: str | None, upstream_path: str = "/")
     return "\n".join(lines) + "\n"
 
 
+#: The oauth2-proxy endpoints this proxy actually defines. A gate that does not
+#: exist would fail `nginx -t` and be rolled back, but failing HERE names the
+#: mistake instead of returning a validation error to unpick.
+GATES = {
+    "user": "/oauth2/auth",            # any signed-in Google identity
+    "admin": "/oauth2/auth-admin",     # the single owner identity
+    "devops": "/oauth2/auth-devops",
+    "devai": "/oauth2/auth-devai",     # the factory's own console and agents
+}
+
+
+def resolve_gate(gate: str | None, admin_only: bool) -> str | None:
+    """Which auth_request endpoint a location uses, or None for public.
+
+    `gate` is the explicit choice and wins; `admin_only` remains as the older,
+    narrower way of saying `gate="admin"`. A full path is accepted as-is so a
+    gate added to the proxy later needs no change here.
+    """
+    if gate:
+        name = str(gate).strip()
+        if name.startswith("/"):
+            return name
+        if name not in GATES:
+            raise ValueError(f"unknown gate {name!r}; known: {', '.join(sorted(GATES))}, "
+                             "or pass a full path such as /oauth2/auth-devai")
+        return GATES[name]
+    return GATES["admin"] if admin_only else GATES["user"]
+
+
 def _block(suffix: str, port: int, admin_only: bool, public: bool = False,
-           admin_prefix: str | None = None) -> str:
+           admin_prefix: str | None = None, gate: str | None = None,
+           upstream: str | None = None) -> str:
     """Render the managed conf for one app. Default: the whole `/suffix/` is gated. With `public=True`
     the base is open; with `admin_prefix` a MORE-SPECIFIC `/suffix/<prefix>/` location is gated (nginx
     routes the longest `^~` prefix first, so admin paths hit the gated block and the rest stay public)."""
-    admin_gate = "/oauth2/auth-admin" if admin_only else "/oauth2/auth"
+    admin_gate = resolve_gate(gate, admin_only)
     header = (f"# MANAGED by the MCP nginx_register_app tool — do not edit by hand. app suffix: {suffix}"
-              f" (public={public}, admin_prefix={admin_prefix or '-'}, admin_only={admin_only})\n")
+              f" (public={public}, admin_prefix={admin_prefix or '-'}, admin_only={admin_only}"
+              f", gate={admin_gate or 'none'}"
+              f", upstream={upstream or f'{APP_UPSTREAM_HOST}:{port}'})\n")
     blocks = []
     # gated admin sub-path FIRST (more specific ^~ prefix wins regardless of file order, but keep it clear)
     if admin_prefix:
         ap = _slug(admin_prefix)
         if ap:
             # strip only the app suffix: /suffix/admin/x -> app /admin/x (keep the admin prefix)
-            blocks.append(_location(f"^~ /{suffix}/{ap}/", port, admin_gate, upstream_path=f"/{ap}/"))
+            blocks.append(_location(f"^~ /{suffix}/{ap}/", port, admin_gate,
+                                    upstream_path=f"/{ap}/", upstream=upstream,
+                                    suffix=f"{suffix}-{ap}"))
     # base location: public (ungated) or gated per admin_only
     base_gate = None if public else admin_gate
-    blocks.append(_location(f"^~ /{suffix}/", port, base_gate))
+    blocks.append(_location(f"^~ /{suffix}/", port, base_gate,
+                            upstream=upstream, suffix=suffix))
     return header + "\n".join(blocks)
 
 
@@ -98,11 +158,20 @@ async def nginx_register_app(args: dict, config: dict) -> dict:
     admin_only = bool(args.get("admin_only", False))
     public = bool(args.get("public", False))
     admin_prefix = args.get("admin_prefix") or None
+    #: Which oauth2-proxy endpoint gates this route. See GATES.
+    gate = args.get("gate") or None
+    #: A CONTAINER upstream as "name:port" (e.g. "devai-analyst:8796"), reached
+    #: on the docker network rather than through the host gateway. Resolved per
+    #: request, so a container that is down 502s its own route instead of
+    #: stopping nginx from starting.
+    upstream = args.get("upstream") or None
     if not suffix:
         return {"ok": False, "error": "invalid or empty suffix"}
-    apps_dir = os.path.join(PROXY_CONF_DIR, "apps")
-    os.makedirs(apps_dir, exist_ok=True)
-    path = os.path.join(apps_dir, f"{suffix}.conf")
+    # One file per route, FLAT in conf/, beside nginx.conf. The `route-` prefix
+    # is load-bearing: nginx.conf includes `route-*.conf` from this same
+    # directory, and a bare `*.conf` glob would match nginx.conf itself and
+    # recurse ("events directive is not allowed here" — measured).
+    path = os.path.join(PROXY_CONF_DIR, f"route-{suffix}.conf")
     prev = open(path, encoding="utf-8").read() if os.path.exists(path) else None
 
     if unregister:
@@ -117,7 +186,12 @@ async def nginx_register_app(args: dict, config: dict) -> dict:
         if not (1 <= port <= 65535):
             return {"ok": False, "error": "port out of range"}
         with open(path, "w", encoding="utf-8") as f:
-            f.write(_block(suffix, port, admin_only, public=public, admin_prefix=admin_prefix))
+            try:
+                f.write(_block(suffix, port, admin_only, public=public,
+                               admin_prefix=admin_prefix, gate=gate,
+                               upstream=upstream))
+            except ValueError as exc:
+                return {"ok": False, "error": str(exc)}
 
     # VALIDATE the whole config; on failure roll the file back so the proxy is never left broken.
     t = _nginx("-t")
