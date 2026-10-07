@@ -44,14 +44,14 @@ services:
       - ../proxy_server/conf:/proxy-conf
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
-      - noted-network          # apps (job2cool) reach mcp-service here
+      - cortex-kb              # Cortex reaches mcp-service here (other apps: docker-compose.local.yml)
       - mcp_internal           # mcp-service reaches websearch_server here
       - ci-network             # the Brain's delivery sensor reaches Jenkins here
       - logus2k_network        # the SDLC wall reaches this service to record answers
     restart: unless-stopped
 
 networks:
-  noted-network:
+  cortex-kb:
     external: true
   mcp_internal:
     external: true
