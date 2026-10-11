@@ -1,13 +1,18 @@
 {
+  "version": 2,
   "tools": {
-    "job2cool/web_search": {
-      "name": "web_search",
-      "app": "job2cool",
+    "web_search": {
       "display_name": "Web Search",
       "description": "Search the web and return titles, URLs and snippets. Backed by a stealth browser (Camoufox) in the isolated websearch service.",
       "impl": "web_search",
       "tier": "read",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "job2cool",
+        "tutor"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
@@ -25,54 +30,74 @@
           "query"
         ]
       },
+      "output_schema": null,
       "config": {},
+      "name": "web_search",
       "created_at": "2026-06-13T17:56:38.890983+00:00",
-      "updated_at": "2026-06-13T17:56:38.890983+00:00"
+      "updated_at": "2026-06-13T17:56:38.890983+00:00",
+      "version": 1
     },
-    "tutor/next_question": {
+    "next_question": {
       "display_name": "Next question",
       "description": "Advance to the next question in the current package and show it. Use when the student asks to move on, skip, or continue.",
       "impl": "client_ui",
       "tier": "write",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "tutor"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {},
         "required": []
       },
+      "output_schema": null,
       "config": {
         "execution": "client"
       },
       "name": "next_question",
-      "app": "tutor",
       "updated_at": "2026-06-22T21:26:02.228086+00:00",
-      "created_at": "2026-06-22T21:26:02.228086+00:00"
+      "created_at": "2026-06-22T21:26:02.228086+00:00",
+      "version": 1
     },
-    "tutor/previous_question": {
+    "previous_question": {
       "display_name": "Previous question",
       "description": "Go back to the previous question in the current package and show it.",
       "impl": "client_ui",
       "tier": "write",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "tutor"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {},
         "required": []
       },
+      "output_schema": null,
       "config": {
         "execution": "client"
       },
       "name": "previous_question",
-      "app": "tutor",
       "updated_at": "2026-06-22T21:26:02.232657+00:00",
-      "created_at": "2026-06-22T21:26:02.232657+00:00"
+      "created_at": "2026-06-22T21:26:02.232657+00:00",
+      "version": 1
     },
-    "tutor/goto_question": {
+    "goto_question": {
       "display_name": "Go to question",
       "description": "Jump to a specific question by its 1-based number within the current package and show it.",
       "impl": "client_ui",
       "tier": "write",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "tutor"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
@@ -85,20 +110,26 @@
           "number"
         ]
       },
+      "output_schema": null,
       "config": {
         "execution": "client"
       },
       "name": "goto_question",
-      "app": "tutor",
       "updated_at": "2026-06-22T21:26:02.236577+00:00",
-      "created_at": "2026-06-22T21:26:02.236577+00:00"
+      "created_at": "2026-06-22T21:26:02.236577+00:00",
+      "version": 1
     },
-    "tutor/open_package": {
+    "open_package": {
       "display_name": "Open package",
       "description": "Open a question package by its id (load it and show its questions). Use to switch packages.",
       "impl": "client_ui",
       "tier": "write",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "tutor"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
@@ -111,95 +142,82 @@
           "package_id"
         ]
       },
+      "output_schema": null,
       "config": {
         "execution": "client"
       },
       "name": "open_package",
-      "app": "tutor",
       "updated_at": "2026-06-22T21:26:02.240140+00:00",
-      "created_at": "2026-06-22T21:26:02.240140+00:00"
+      "created_at": "2026-06-22T21:26:02.240140+00:00",
+      "version": 1
     },
-    "tutor/get_current_state": {
+    "get_current_state": {
       "display_name": "Get current state",
       "description": "Return what the student is currently looking at: the active package, the current question (stem, options, type), and whether they have answered it (and if it was correct). Use to ground your help in the live state.",
       "impl": "client_ui",
       "tier": "read",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "tutor"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {},
         "required": []
       },
+      "output_schema": null,
       "config": {
         "execution": "client"
       },
       "name": "get_current_state",
-      "app": "tutor",
       "updated_at": "2026-06-22T21:26:02.243658+00:00",
-      "created_at": "2026-06-22T21:26:02.243658+00:00"
+      "created_at": "2026-06-22T21:26:02.243658+00:00",
+      "version": 1
     },
-    "tutor/get_progress": {
+    "get_progress": {
       "display_name": "Get progress",
       "description": "Return the student's progress in the current package: how many questions answered, how many correct, and the total.",
       "impl": "client_ui",
       "tier": "read",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "tutor"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {},
         "required": []
       },
+      "output_schema": null,
       "config": {
         "execution": "client"
       },
       "name": "get_progress",
-      "app": "tutor",
       "updated_at": "2026-06-22T21:26:02.247192+00:00",
-      "created_at": "2026-06-22T21:26:02.247192+00:00"
+      "created_at": "2026-06-22T21:26:02.247192+00:00",
+      "version": 1
     },
-    "tutor/web_search": {
-      "display_name": "Web search",
-      "description": "Search the web for current or external information not covered by the package material. Returns titles, URLs and snippets to cite. Use only when the answer is outside the package content.",
-      "impl": "web_search",
-      "tier": "read",
-      "enabled": true,
-      "input_schema": {
-        "type": "object",
-        "properties": {
-          "query": {
-            "type": "string",
-            "description": "The web search query"
-          },
-          "max_results": {
-            "type": "integer",
-            "description": "Maximum results to return (1-25)",
-            "default": 5
-          }
-        },
-        "required": [
-          "query"
-        ]
-      },
-      "config": {
-        "execution": "server"
-      },
-      "name": "web_search",
-      "app": "tutor",
-      "updated_at": "2026-06-22T21:26:02.250640+00:00",
-      "created_at": "2026-06-22T21:26:02.250640+00:00"
-    },
-    "tutor/submit_answer": {
+    "submit_answer": {
       "display_name": "Submit answer",
       "description": "Grade the answer the student states (e.g. \"I think it is B\"). Pass the chosen option as a letter (A/B/C), number, id, or its text. Grading is deterministic against the package key; returns whether it was correct and which option(s) are correct.",
       "impl": "client_ui",
       "tier": "write",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "tutor"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
           "answer": {
             "type": "string",
-            "description": "The chosen option: letter (A/B/C\u2026), 1-based number, option id, or option text."
+            "description": "The chosen option: letter (A/B/C…), 1-based number, option id, or option text."
           },
           "answers": {
             "type": "array",
@@ -211,77 +229,101 @@
         },
         "required": []
       },
+      "output_schema": null,
       "config": {
         "execution": "client"
       },
       "name": "submit_answer",
-      "app": "tutor",
       "updated_at": "2026-06-24T19:01:36.495908+00:00",
-      "created_at": "2026-06-24T19:01:36.495908+00:00"
+      "created_at": "2026-06-24T19:01:36.495908+00:00",
+      "version": 1
     },
-    "tutor/get_grounding": {
+    "get_grounding": {
       "display_name": "Get grounding",
       "description": "Return the verbatim source passages and citations the CURRENT question was written from (its concepts grounding). Use this to explain or cite from the source material.",
       "impl": "client_ui",
       "tier": "read",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "tutor"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {},
         "required": []
       },
+      "output_schema": null,
       "config": {
         "execution": "client"
       },
       "name": "get_grounding",
-      "app": "tutor",
       "updated_at": "2026-06-24T19:01:36.500616+00:00",
-      "created_at": "2026-06-24T19:01:36.500616+00:00"
+      "created_at": "2026-06-24T19:01:36.500616+00:00",
+      "version": 1
     },
-    "tutor/get_mastery": {
+    "get_mastery": {
       "display_name": "Get mastery",
       "description": "Return the student per-concept mastery for the current package: ability (0..1), attempts, correct, and whether each concept is mastered. Requires the student to be signed in.",
       "impl": "client_ui",
       "tier": "read",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "tutor"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {},
         "required": []
       },
+      "output_schema": null,
       "config": {
         "execution": "client"
       },
       "name": "get_mastery",
-      "app": "tutor",
       "updated_at": "2026-06-24T19:01:36.504731+00:00",
-      "created_at": "2026-06-24T19:01:36.504731+00:00"
+      "created_at": "2026-06-24T19:01:36.504731+00:00",
+      "version": 1
     },
-    "tutor/next_best_question": {
+    "next_best_question": {
       "display_name": "Next best question",
       "description": "Adaptively navigate to the best next question: an unanswered question on the student weakest in-scope concept at a difficulty just above their ability. Returns the new state.",
       "impl": "client_ui",
       "tier": "write",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "tutor"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {},
         "required": []
       },
+      "output_schema": null,
       "config": {
         "execution": "client"
       },
       "name": "next_best_question",
-      "app": "tutor",
       "updated_at": "2026-06-24T19:01:36.508667+00:00",
-      "created_at": "2026-06-24T19:01:36.508667+00:00"
+      "created_at": "2026-06-24T19:01:36.508667+00:00",
+      "version": 1
     },
-    "agent_runtime/newsapi_search": {
+    "newsapi_search": {
       "display_name": "NewsAPI Search",
       "description": "Search NewsAPI for recent articles matching a keyword or phrase, returning the matching articles and the total result count.",
       "impl": "newsapi_search",
       "tier": "read",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "agent_runtime"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
@@ -294,18 +336,25 @@
           "query"
         ]
       },
+      "output_schema": null,
       "config": {},
       "name": "newsapi_search",
-      "app": "agent_runtime",
       "updated_at": "2026-06-28T02:28:34.089442+00:00",
-      "created_at": "2026-06-28T02:28:34.089442+00:00"
+      "created_at": "2026-06-28T02:28:34.089442+00:00",
+      "version": 1
     },
-    "agent_runtime/fetch_url": {
+    "fetch_url": {
       "display_name": "Fetch URL",
       "description": "Fetch the content of a web URL. Returns the page text (HTML stripped to readable text).",
       "impl": "fetch_url",
       "tier": "read",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "agent_runtime",
+        "job2cool"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
@@ -322,18 +371,24 @@
           "url"
         ]
       },
+      "output_schema": null,
       "config": {},
       "name": "fetch_url",
-      "app": "agent_runtime",
-      "updated_at": "2026-06-28T02:28:34.092107+00:00",
-      "created_at": "2026-06-28T02:28:34.092107+00:00"
+      "updated_at": "2026-10-10T02:01:37.269591+00:00",
+      "created_at": "2026-06-28T02:28:34.092107+00:00",
+      "version": 2
     },
-    "sdlc/sdlc_collect_evidence": {
+    "sdlc_collect_evidence": {
       "display_name": "Collect cell evidence",
       "description": "Gather the raw evidence for one maturity cell of one project. Measured cells call their sensor (e.g. delivery metrics from a CI job); attested cells return the stored human answer, or report that one is needed.",
       "impl": "sdlc_collect_evidence",
       "tier": "read",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "sdlc"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
@@ -352,18 +407,24 @@
           "cell"
         ]
       },
+      "output_schema": null,
       "config": {},
       "name": "sdlc_collect_evidence",
-      "app": "sdlc",
       "updated_at": "2026-07-18T17:09:01.112981+00:00",
-      "created_at": "2026-07-18T17:09:01.112981+00:00"
+      "created_at": "2026-07-18T17:09:01.112981+00:00",
+      "version": 1
     },
-    "sdlc/sdlc_score_cell": {
+    "sdlc_score_cell": {
       "display_name": "Score cell maturity",
       "description": "Turn collected evidence into a maturity level 0-4 using the cell scoring specification: level, confidence, per-metric breakdown and the reason the level was reached.",
       "impl": "sdlc_score_cell",
       "tier": "read",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "sdlc"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
@@ -387,18 +448,24 @@
           "evidence"
         ]
       },
+      "output_schema": null,
       "config": {},
       "name": "sdlc_score_cell",
-      "app": "sdlc",
       "updated_at": "2026-07-18T17:32:45.502349+00:00",
-      "created_at": "2026-07-18T17:09:01.126192+00:00"
+      "created_at": "2026-07-18T17:09:01.126192+00:00",
+      "version": 1
     },
-    "sdlc/sdlc_state": {
+    "sdlc_state": {
       "display_name": "Read/write assessment state",
       "description": "Read or write one project-and-cell assessment record. Writing appends to the history trail and never silently overwrites a human override.",
       "impl": "sdlc_state",
       "tier": "write",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "sdlc"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
@@ -428,18 +495,24 @@
           "project"
         ]
       },
+      "output_schema": null,
       "config": {},
       "name": "sdlc_state",
-      "app": "sdlc",
       "updated_at": "2026-07-18T17:32:45.507961+00:00",
-      "created_at": "2026-07-18T17:09:01.138327+00:00"
+      "created_at": "2026-07-18T17:09:01.138327+00:00",
+      "version": 1
     },
-    "sdlc/sdlc_advise": {
+    "sdlc_advise": {
       "display_name": "Advise next move",
       "description": "Rank what a project should do next: for each assessed cell below level 4, the gap weighted by that phase strategic leverage, the specific condition blocking the next level, and the knowledge base own anchor describing that level. Optionally writes the top proposals to the project inbox.",
       "impl": "sdlc_advise",
       "tier": "write",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "sdlc"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
@@ -459,18 +532,24 @@
           "project"
         ]
       },
+      "output_schema": null,
       "config": {},
       "name": "sdlc_advise",
-      "app": "sdlc",
       "updated_at": "2026-07-18T19:21:01.658555+00:00",
-      "created_at": "2026-07-18T19:21:01.658555+00:00"
+      "created_at": "2026-07-18T19:21:01.658555+00:00",
+      "version": 1
     },
-    "sdlc/sdlc_answer": {
+    "sdlc_answer": {
       "display_name": "Answer an attested cell",
       "description": "Record an answer for a cell that cannot be measured, and score it immediately. A human answer is authoritative; an answer supplied by anything else is recorded as inferred, carries its basis, and is flagged as needing confirmation.",
       "impl": "sdlc_answer",
       "tier": "write",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "sdlc"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
@@ -499,46 +578,24 @@
           "level"
         ]
       },
+      "output_schema": null,
       "config": {},
       "name": "sdlc_answer",
-      "app": "sdlc",
       "updated_at": "2026-07-20T20:14:51.009023+00:00",
-      "created_at": "2026-07-18T19:46:28.504027+00:00"
+      "created_at": "2026-07-18T19:46:28.504027+00:00",
+      "version": 1
     },
-    "job2cool/fetch_url": {
-      "display_name": "Fetch URL",
-      "description": "Fetch a web URL and return its readable text (HTML stripped).",
-      "impl": "fetch_url",
-      "tier": "read",
-      "enabled": true,
-      "input_schema": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string"
-          },
-          "max_chars": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "url"
-        ]
-      },
-      "config": {},
-      "name": "fetch_url",
-      "app": "job2cool",
-      "updated_at": "2026-07-26T16:26:55.988113+00:00",
-      "created_at": "2026-07-26T16:26:55.988113+00:00"
-    },
-    "factory/nginx_register_app": {
-      "name": "nginx_register_app",
-      "app": "factory",
+    "nginx_register_app": {
       "display_name": "Register app on the reverse proxy",
       "description": "Deterministically put a generated app on the domain nginx behind the shared oauth2-proxy: writes a managed per-app location block for the given URL suffix and port, validates the whole config (nginx -t, rolling back on failure) and reloads. admin_only gates to the owner identity; unregister removes the block.",
       "impl": "nginx_register_app",
       "tier": "write",
+      "destructive": false,
+      "idempotent": false,
       "enabled": true,
+      "apps": [
+        "factory"
+      ],
       "input_schema": {
         "type": "object",
         "properties": {
@@ -565,10 +622,156 @@
           "suffix"
         ]
       },
+      "output_schema": null,
       "config": {},
+      "name": "nginx_register_app",
       "created_at": "2026-08-14T13:37:22.055560+00:00",
-      "updated_at": "2026-08-14T13:37:22.055560+00:00"
+      "updated_at": "2026-08-14T13:37:22.055560+00:00",
+      "version": 1
     }
   },
-  "skills": {}
+  "skills": {
+    "cite_with_tag": {
+      "display_name": "Cite knowledge-base passages with their tag",
+      "description": "How to cite a passage returned by a knowledge-base tool so the page can turn the citation into a button.",
+      "content": "When you use a passage returned by {{kb_tool}}, cite it inline with its tag exactly as the tool returned it, for example [markdown_chunk:3f9a1c…]. Never invent a tag, never put a training, document or project id inside a tag, and never cite a passage you did not read in this conversation.",
+      "arguments": [
+        {
+          "name": "kb_tool",
+          "description": "the knowledge-base search tool's name",
+          "required": false
+        }
+      ],
+      "apps": [
+        "slides",
+        "tutor"
+      ],
+      "tools": [
+        "search_knowledge_base",
+        "kb_search"
+      ],
+      "tags": [
+        "citation",
+        "knowledge-base"
+      ],
+      "enabled": true,
+      "name": "cite_with_tag",
+      "version": 1,
+      "created_at": "2026-10-10T01:58:13.830326+00:00",
+      "updated_at": "2026-10-10T01:58:13.830326+00:00"
+    },
+    "pt_pt_style": {
+      "display_name": "European Portuguese",
+      "description": "Write in the Portuguese of Portugal, never in Brazilian forms.",
+      "content": "Write European Portuguese: the forms used in Portugal (tu/você as in Portugal, 'a fazer' rather than 'fazendo', Portuguese spelling), never Brazilian forms. Keep product, team and document names exactly as the organisation writes them. When the person writes in another language, answer in that language.",
+      "arguments": [],
+      "apps": [
+        "agent_runtime",
+        "slides",
+        "tutor"
+      ],
+      "tools": [],
+      "tags": [
+        "language"
+      ],
+      "enabled": true,
+      "name": "pt_pt_style",
+      "version": 2,
+      "created_at": "2026-10-10T01:58:13.830339+00:00",
+      "updated_at": "2026-10-10T03:22:47.622562+00:00"
+    },
+    "ai_generated_disclosure": {
+      "display_name": "AI-generated disclosure",
+      "description": "State once, plainly, that an answer was generated by a model and must be checked before it is relied on.",
+      "content": "When your answer will be read outside this conversation (sent, published, filed or acted on by someone else), say once, plainly and without apology, that it was generated by a language model and must be checked before it is relied on. Say it once per answer, not per paragraph, and never remove it when asked to shorten.",
+      "arguments": [],
+      "apps": [
+        "agent_runtime",
+        "job2cool"
+      ],
+      "tools": [],
+      "tags": [
+        "accountability"
+      ],
+      "enabled": true,
+      "name": "ai_generated_disclosure",
+      "version": 1,
+      "created_at": "2026-10-10T01:58:13.830343+00:00",
+      "updated_at": "2026-10-10T01:58:13.830343+00:00"
+    }
+  },
+  "apps": {
+    "tutor": {
+      "display_name": "tutor",
+      "description": "Registered automatically when the catalog was introduced.",
+      "owner": "",
+      "contact": "",
+      "status": "active",
+      "tags": [],
+      "name": "tutor",
+      "version": 1,
+      "created_at": "2026-10-11T19:25:08.792252+00:00",
+      "updated_at": "2026-10-11T19:25:08.792260+00:00"
+    },
+    "slides": {
+      "display_name": "slides",
+      "description": "Registered automatically when the catalog was introduced.",
+      "owner": "",
+      "contact": "",
+      "status": "active",
+      "tags": [],
+      "name": "slides",
+      "version": 1,
+      "created_at": "2026-10-11T19:25:08.792262+00:00",
+      "updated_at": "2026-10-11T19:25:08.792263+00:00"
+    },
+    "sdlc": {
+      "display_name": "sdlc",
+      "description": "Registered automatically when the catalog was introduced.",
+      "owner": "",
+      "contact": "",
+      "status": "active",
+      "tags": [],
+      "name": "sdlc",
+      "version": 1,
+      "created_at": "2026-10-11T19:25:08.792264+00:00",
+      "updated_at": "2026-10-11T19:25:08.792265+00:00"
+    },
+    "job2cool": {
+      "display_name": "job2cool",
+      "description": "Registered automatically when the catalog was introduced.",
+      "owner": "",
+      "contact": "",
+      "status": "active",
+      "tags": [],
+      "name": "job2cool",
+      "version": 1,
+      "created_at": "2026-10-11T19:25:08.792266+00:00",
+      "updated_at": "2026-10-11T19:25:08.792267+00:00"
+    },
+    "factory": {
+      "display_name": "factory",
+      "description": "Registered automatically when the catalog was introduced.",
+      "owner": "",
+      "contact": "",
+      "status": "active",
+      "tags": [],
+      "name": "factory",
+      "version": 1,
+      "created_at": "2026-10-11T19:25:08.792268+00:00",
+      "updated_at": "2026-10-11T19:25:08.792269+00:00"
+    },
+    "agent_runtime": {
+      "display_name": "agent_runtime",
+      "description": "Registered automatically when the catalog was introduced.",
+      "owner": "",
+      "contact": "",
+      "status": "active",
+      "tags": [],
+      "name": "agent_runtime",
+      "version": 1,
+      "created_at": "2026-10-11T19:25:08.792270+00:00",
+      "updated_at": "2026-10-11T19:25:08.792272+00:00"
+    }
+  }
 }

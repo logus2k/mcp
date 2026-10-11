@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MCP Console</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+<style>
+/* Layout: a fixed 56px bar, a 200px side menu (a top strip on phones), a content column, and a 520px detail
+   drawer that becomes a full-width sheet on phones. Tokens: the Banco CTT set Cortex and Slides use (tokens.css). */
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px;
+  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-pill: 999px;
+  --menu-width: 200px; --drawer-width: 520px; --bar-height: 56px;
+  --primary: #E00024; --primary-active: #C4001F; --text-on-primary: #FFFFFF;
+  --success: #00BFB4; --alert: #FFC800; --offline: #A681AB;
+  --surface-page: #F7F9FC; --surface: #FFFFFF; --surface-raised: #FFFFFF; --surface-bar: #F1F4F8;
+  --surface-field: #F1F4F8; --surface-hover: #F7F9FC; --surface-active: #F1F4F8;
+  --divider: #E4E9F2; --control-border: #C5CEE0;
+  --text: #000000; --text-title: #333333; --text-weak: #666666; --text-section: #999999; --text-disabled: #CCCCCC;
+  --brand-text: #E00024; --link: #00897F; --error-text: #C8102E; --alert-text: #996F00;
+  --container-primary: #FBDFE3; --container-info: #E3F0F0; --container-alert: #FFF1BF; --container-offline: #F1EAF1;
+  --chip-fluid: #E4E9F2; --overlay: rgba(51,51,51,.6);
+  --shadow-float: 0 0 6px 0 rgba(197,206,224,.5); --shadow-window: 0 2px 6px 0 rgba(110,123,147,.25), 0 12px 32px 0 rgba(110,123,147,.3);
+  --ok: #00897F; --ok-bg: #E3F0F0; --warn: #996F00; --warn-bg: #FFF1BF; --bad: #C8102E; --bad-bg: #FBDFE3;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface-page: #12151B; --surface: #1A1E26; --surface-raised: #232833; --surface-bar: #171B22;
+    --surface-field: #242A35; --surface-hover: #232833; --surface-active: #262B35;
+    --divider: #2C3340; --control-border: #8F9BB3;
+    --text: #F1F4F8; --text-title: #F1F4F8; --text-weak: #C5CEE0; --text-section: #8F9BB3; --text-disabled: #5C6578;
+    --brand-text: #EC677D; --link: #66D8D3; --error-text: #FFA3B0; --alert-text: #FFC800;
+    --container-primary: #4A1520; --container-info: #0F3B39; --container-alert: #3D3200; --container-offline: #35213A;
+    --chip-fluid: #2C3340; --overlay: rgba(0,0,0,.6);
+    --shadow-float: 0 4px 16px 0 rgba(0,0,0,.6); --shadow-window: 0 4px 16px 0 rgba(0,0,0,.6), 0 16px 40px 0 rgba(0,0,0,.5);
+    --ok: #66D8D3; --ok-bg: #0F3B39; --warn: #FFC800; --warn-bg: #3D3200; --bad: #FFA3B0; --bad-bg: #4A1520;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --surface-page: #12151B; --surface: #1A1E26; --surface-raised: #232833; --surface-bar: #171B22;
+  --surface-field: #242A35; --surface-hover: #232833; --surface-active: #262B35;
+  --divider: #2C3340; --control-border: #8F9BB3;
+  --text: #F1F4F8; --text-title: #F1F4F8; --text-weak: #C5CEE0; --text-section: #8F9BB3; --text-disabled: #5C6578;
+  --brand-text: #EC677D; --link: #66D8D3; --error-text: #FFA3B0; --alert-text: #FFC800;
+  --container-primary: #4A1520; --container-info: #0F3B39; --container-alert: #3D3200; --container-offline: #35213A;
+  --chip-fluid: #2C3340; --overlay: rgba(0,0,0,.6);
+  --shadow-float: 0 4px 16px 0 rgba(0,0,0,.6); --shadow-window: 0 4px 16px 0 rgba(0,0,0,.6), 0 16px 40px 0 rgba(0,0,0,.5);
+  --ok: #66D8D3; --ok-bg: #0F3B39; --warn: #FFC800; --warn-bg: #3D3200; --bad: #FFA3B0; --bad-bg: #4A1520;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; font: 400 14px/20px var(--font-sans); letter-spacing: .25px; color: var(--text); background: var(--surface-page); }
+a { color: var(--link); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+code, .mono { font-family: var(--font-mono); font-size: 12.5px; }
+h1, h2, h3 { margin: 0; color: var(--text-title); text-wrap: balance; }
+h2 { font-size: 20px; line-height: 24px; font-weight: 700; }
+h3 { font-size: 14px; line-height: 20px; font-weight: 700; }
+.eyebrow { font-size: 12px; line-height: 16px; letter-spacing: .6px; text-transform: uppercase; color: var(--text-section); font-weight: 500; }
+.muted { color: var(--text-weak); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; height: var(--bar-height); display: flex; align-items: center; gap: var(--space-4); padding: 0 var(--space-4); background: var(--surface); border-bottom: 1px solid var(--divider); }
+.wordmark { display: flex; align-items: center; gap: var(--space-2); font-weight: 700; font-size: 16px; color: var(--text-title); white-space: nowrap; }
+.wordmark .mark { width: 22px; height: 22px; border-radius: var(--radius-sm); background: var(--primary); display: inline-grid; place-items: center; color: var(--text-on-primary); font-size: 11px; font-weight: 700; }
+.health { display: flex; gap: var(--space-3); flex-wrap: wrap; font-size: 12px; color: var(--text-weak); }
+.health span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-disabled); }
+.dot.ok { background: var(--success); } .dot.warn { background: var(--alert); } .dot.bad { background: var(--primary); }
+.bar .right { margin-left: auto; display: flex; gap: var(--space-2); align-items: center; }
+.field { height: 36px; padding: 0 var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-md); background: var(--surface-field); min-width: 0; }
+.field:focus { border-color: var(--text-title); }
+.btn { height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--control-border); background: var(--surface); color: var(--text-title); font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--surface-hover); }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: var(--text-on-primary); }
+.btn.primary:hover { background: var(--primary-active); }
+.btn.sm { height: 28px; padding: 0 10px; font-size: 12px; }
+.btn.danger { color: var(--error-text); }
+
+/* frame */
+.frame { display: grid; grid-template-columns: var(--menu-width) minmax(0, 1fr); min-height: calc(100% - var(--bar-height)); }
+.menu { border-right: 1px solid var(--divider); background: var(--surface-bar); padding: var(--space-4) var(--space-2); display: flex; flex-direction: column; gap: 2px; }
+.menu a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); color: var(--text-weak); text-decoration: none; font-weight: 500; }
+.menu a .count { margin-left: auto; font-size: 12px; color: var(--text-section); }
+.menu a:hover { background: var(--surface-hover); color: var(--text-title); }
+.menu a[aria-current="page"] { background: var(--surface); color: var(--text-title); box-shadow: inset 3px 0 0 var(--primary); }
+.menu a svg { width: 16px; height: 16px; flex: none; }
+.menu .section { margin-top: var(--space-4); padding: 0 12px 6px; }
+.content { padding: var(--space-6) var(--space-6) var(--space-8); min-width: 0; }
+.content > section { display: none; }
+.content > section.active { display: block; }
+.view-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-4); }
+.view-head p { margin: 4px 0 0; color: var(--text-weak); max-width: 64ch; }
+
+/* tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-6); }
+.tile { background: var(--surface); border: 1px solid var(--divider); border-radius: var(--radius-lg); padding: var(--space-4); display: flex; flex-direction: column; gap: 4px; }
+.tile .big { font-size: 24px; line-height: 28px; font-weight: 700; color: var(--text-title); }
+.tile .sub { font-size: 12px; color: var(--text-weak); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-4); align-items: start; }
+.card .tablewrap td, .card .tablewrap th { padding: 8px 8px; }
+td.time { white-space: nowrap; }
+#recent td { max-width: 132px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card { background: var(--surface); border: 1px solid var(--divider); border-radius: var(--radius-lg); padding: var(--space-4); min-width: 0; }
+.card h3 { margin-bottom: var(--space-3); }
+.attn { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.attn li { display: grid; grid-template-columns: 4px 1fr auto; gap: var(--space-3); align-items: start; padding: 10px 0; border-top: 1px solid var(--divider); }
+.attn li:first-child { border-top: 0; padding-top: 0; }
+.attn .stripe { width: 4px; border-radius: 2px; align-self: stretch; background: var(--alert); }
+.attn .stripe.bad { background: var(--primary); } .attn .stripe.info { background: var(--success); }
+.attn .why { font-size: 12px; color: var(--text-weak); }
+
+/* toolbar + chips */
+.toolbar { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; margin-bottom: var(--space-3); }
+.toolbar .field { flex: 1 1 220px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { height: 28px; padding: 0 10px; border-radius: var(--radius-pill); border: 1px solid var(--divider); background: var(--surface); font-size: 12px; color: var(--text-weak); display: inline-flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="true"] { background: var(--container-primary); border-color: transparent; color: var(--brand-text); font-weight: 500; }
+.pill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.pill.read { background: var(--ok-bg); color: var(--ok); } .pill.write { background: var(--bad-bg); color: var(--bad); }
+.pill.server { background: var(--chip-fluid); color: var(--text-weak); } .pill.client { background: var(--container-offline); color: var(--offline); }
+.pill.app { background: var(--chip-fluid); color: var(--text-weak); font-family: var(--font-mono); font-weight: 400; }
+.pill.ok { background: var(--ok-bg); color: var(--ok); } .pill.err { background: var(--bad-bg); color: var(--bad); } .pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.tag { background: var(--container-info); color: var(--ok); }
+
+/* tables */
+.tablewrap { background: var(--surface); border: 1px solid var(--divider); border-radius: var(--radius-lg); overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 12px; letter-spacing: .4px; text-transform: uppercase; color: var(--text-section); font-weight: 500; padding: 10px 12px; border-bottom: 1px solid var(--divider); white-space: nowrap; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--divider); vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: var(--surface-hover); }
+tbody tr[aria-selected="true"] td { background: var(--surface-active); box-shadow: inset 3px 0 0 var(--primary); }
+td.name { font-weight: 500; color: var(--text-title); white-space: nowrap; }
+td .desc { display: block; font-size: 12px; color: var(--text-weak); max-width: 52ch; white-space: normal; }
+.apps { display: flex; gap: 4px; flex-wrap: wrap; }
+.toggle { width: 34px; height: 20px; border-radius: var(--radius-pill); background: var(--control-border); border: 0; position: relative; flex: none; }
+.toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left 150ms; }
+.toggle[aria-checked="true"] { background: var(--success); } .toggle[aria-checked="true"]::after { left: 16px; }
+.never { color: var(--alert-text); font-size: 12px; }
+
+/* drawer */
+.scrim { position: fixed; inset: 0; background: var(--overlay); z-index: 30; display: none; }
+@media (min-width: 861px) { .scrim { display: none !important; } }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(var(--drawer-width), 100vw); background: var(--surface); box-shadow: var(--shadow-window); z-index: 40; transform: translateX(104%); transition: transform 200ms cubic-bezier(.2,0,0,1); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); }
+.drawer.open { transform: none; }
+@media (prefers-reduced-motion: reduce) { .drawer { transition: none; } .toggle::after { transition: none; } }
+.drawer-head { padding: var(--space-4) var(--space-4) 0; border-bottom: 1px solid var(--divider); }
+.drawer-head .title { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.drawer-head h2 { font-family: var(--font-mono); font-size: 18px; }
+.drawer-head .close { margin-left: auto; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; margin-top: var(--space-3); }
+.tabs button { background: none; border: 0; padding: 8px 10px; color: var(--text-weak); font-weight: 500; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--brand-text); border-bottom-color: var(--primary); }
+.drawer-body { padding: var(--space-4); overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: var(--space-4); }
+.drawer-body > div[role="tabpanel"] { display: none; flex-direction: column; gap: var(--space-4); }
+.drawer-body > div[role="tabpanel"].active { display: flex; }
+.kv { display: grid; grid-template-columns: 120px 1fr; gap: 6px var(--space-3); font-size: 13px; }
+.kv dt { color: var(--text-section); } .kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.form { display: flex; flex-direction: column; gap: var(--space-3); }
+.form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-weak); }
+.form .field, .form textarea { width: 100%; }
+.form textarea { min-height: 96px; padding: var(--space-2) var(--space-3); border: 1px solid var(--control-border); border-radius: var(--radius-md); background: var(--surface-field); resize: vertical; }
+.hint { font-size: 12px; color: var(--text-section); }
+pre { margin: 0; padding: var(--space-3); background: var(--surface-field); border-radius: var(--radius-md); overflow-x: auto; font-family: var(--font-mono); font-size: 12px; line-height: 18px; color: var(--text); }
+.snip { display: flex; flex-direction: column; gap: 6px; }
+.snip .label { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.result { border: 1px solid var(--divider); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; gap: 6px; }
+.result .meta { display: flex; gap: var(--space-3); font-size: 12px; color: var(--text-weak); }
+.confirm { border-left: 4px solid var(--primary); background: var(--container-primary); color: var(--text); padding: var(--space-3); border-radius: var(--radius-md); font-size: 13px; display: flex; flex-direction: column; gap: var(--space-2); }
+.example { font-size: 12px; color: var(--alert-text); background: var(--container-alert); padding: 2px 8px; border-radius: var(--radius-pill); display: inline-block; }
+.diff { font-family: var(--font-mono); font-size: 12px; line-height: 18px; border: 1px solid var(--divider); border-radius: var(--radius-md); overflow: hidden; }
+.diff div { padding: 1px 10px; white-space: pre-wrap; }
+.diff .del { background: var(--bad-bg); color: var(--bad); } .diff .add { background: var(--ok-bg); color: var(--ok); }
+.versions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.versions li { display: flex; gap: var(--space-3); align-items: center; padding: 8px 0; border-top: 1px solid var(--divider); font-size: 13px; }
+.versions li:first-child { border-top: 0; }
+.versions .btn { margin-left: auto; }
+.proptable td, .proptable th { padding: 6px 10px; font-size: 12.5px; }
+
+/* apps */
+.appcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-4); }
+.appcard { background: var(--surface); border: 1px solid var(--divider); border-radius: var(--radius-lg); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.appcard .head { display: flex; align-items: center; gap: var(--space-2); }
+.appcard .head h3 { font-family: var(--font-mono); font-size: 15px; }
+.appcard .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+.appcard .stats div { background: var(--surface-field); border-radius: var(--radius-md); padding: 8px 10px; }
+.appcard .stats b { display: block; font-size: 18px; line-height: 22px; color: var(--text-title); }
+.appcard .stats span { font-size: 12px; color: var(--text-weak); }
+.keys { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.keys div { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+.keys .btn { margin-left: auto; }
+.ext { border-top: 1px dashed var(--divider); padding-top: var(--space-3); font-size: 13px; }
+
+/* skills */
+.editor { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.editor textarea { min-height: 220px; }
+.preview { border: 1px solid var(--divider); border-radius: var(--radius-md); padding: var(--space-3); font-size: 13px; line-height: 20px; min-width: 0; }
+.preview p { margin: 0 0 8px; }
+.preview code { background: var(--surface-field); padding: 1px 4px; border-radius: 3px; }
+
+/* activity */
+.summary { display: flex; gap: var(--space-6); flex-wrap: wrap; margin-bottom: var(--space-3); font-size: 13px; color: var(--text-weak); }
+.summary b { color: var(--text-title); font-size: 16px; margin-right: 4px; }
+
+/* settings */
+.impls td:first-child { font-family: var(--font-mono); font-weight: 500; }
+
+/* toast */
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--surface-inverse, #333); color: #fff; padding: 10px 16px; border-radius: var(--radius-md); font-size: 13px; z-index: 60; box-shadow: var(--shadow-window); opacity: 0; pointer-events: none; transition: opacity 150ms; }
+.toast.show { opacity: 1; }
+
+@media (max-width: 600px) {
+  #tooltable th:nth-child(n+4):not(:last-child), #tooltable td:nth-child(n+4):not(:last-child) { display: none; }
+  #tooltable td .desc { display: none; }
+  #skilltable th:nth-child(n+3):not(:last-child), #skilltable td:nth-child(n+3):not(:last-child) { display: none; }
+}
+@media (max-width: 860px) {
+  .frame { grid-template-columns: 1fr; }
+  .menu { flex-direction: row; overflow-x: auto; padding: var(--space-2) var(--space-4); border-right: 0; border-bottom: 1px solid var(--divider); gap: 4px; }
+  .menu a { padding: 8px 10px; white-space: nowrap; }
+  .menu a[aria-current="page"] { box-shadow: inset 0 -3px 0 var(--primary); }
+  .menu .section, .menu a .count { display: none; }
+  .content { padding: var(--space-4); }
+  .bar .health, .bar .right .field { display: none; }
+  .bar { gap: var(--space-2); }
+  .kv { grid-template-columns: 1fr; }
+  .editor { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wordmark"><span class="mark">M</span> MCP Console</div>
+  <div class="health" aria-label="Health">
+    <span><i class="dot ok"></i> service</span>
+    <span><i class="dot ok"></i> websearch_server</span>
+    <span><i class="dot ok"></i> jenkins</span>
+    <span><i class="dot warn"></i> keys optional</span>
+  </div>
+  <div class="right">
+    <input id="token" class="field" type="password" placeholder="admin token (for writes)" aria-label="Admin token" style="width:200px">
+    <button class="btn" id="theme" aria-label="Toggle theme">◐</button>
+  </div>
+</header>
+
+<div class="frame">
+  <nav class="menu" aria-label="Views">
+    <a href="#overview" data-view="overview" aria-current="page"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Overview</a>
+    <div class="section eyebrow">Catalog</div>
+    <a href="#tools" data-view="tools"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2.5a3 3 0 0 0-3.6 3.9L2 10.8 4.2 13l4.4-4.4A3 3 0 0 0 12.5 5l-1.8 1.8-1.5-1.5z"/></svg>Tools<span class="count">21</span></a>
+    <a href="#skills" data-view="skills"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 2 4 9h4l-1 5 5-7H8z" stroke-linejoin="round"/></svg>Skills<span class="count">3</span></a>
+    <a href="#apps" data-view="apps"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c2.5 2.5 2.5 9.5 0 12M8 2c-2.5 2.5-2.5 9.5 0 12"/></svg>Apps<span class="count">5</span></a>
+    <div class="section eyebrow">Operate</div>
+    <a href="#activity" data-view="activity"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h3l2-5 2 10 2-5h3"/></svg>Activity</a>
+    <a href="#settings" data-view="settings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg>Settings</a>
+  </nav>
+
+  <main class="content">
+
+    <!-- OVERVIEW -->
+    <section id="view-overview" class="active">
+      <div class="view-head">
+        <div><h2>Overview</h2><p>What is live, what needs a decision, and what the last calls were. Counts come from the registry; call figures need the invocation record (spec §4.2).</p></div>
+        <span class="example">call figures are examples</span>
+      </div>
+      <div class="tiles">
+        <a class="tile" href="#tools" style="text-decoration:none;color:inherit"><span class="eyebrow">Tools</span><span class="big num">21 <span class="muted" style="font-size:14px;font-weight:400">/ 21 enabled</span></span><span class="sub">5 apps · 9 implementations</span></a>
+        <a class="tile" href="#skills" style="text-decoration:none;color:inherit"><span class="eyebrow">Skills</span><span class="big num">3</span><span class="sub">offered to 3 apps · served as prompts and resources</span></a>
+        <a class="tile" href="#apps" style="text-decoration:none;color:inherit"><span class="eyebrow">Apps</span><span class="big num">5</span><span class="sub">4 with an active key · 1 without</span></a>
+        <a class="tile" href="#activity" style="text-decoration:none;color:inherit"><span class="eyebrow">Calls · last 24 h</span><span class="big num">318</span><span class="sub"><span style="color:var(--bad)">7 errors (2.2%)</span> · p95 1.9 s</span></a>
+      </div>
+      <div class="two">
+        <div class="card">
+          <h3>Needs attention</h3>
+          <ul class="attn">
+            <li><span class="stripe bad"></span><div><b>nginx_register_app</b> is write-tier and reachable without a key from 4 networks.<div class="why">Keys are optional until MCP_REQUIRE_KEYS=1. Write-tier tools should never be anonymous.</div></div><a class="btn sm" href="#tool-nginx_register_app">Open</a></li>
+            <li><span class="stripe"></span><div><b>10 tutor tools</b> were never called in 90 days.<div class="why">Client-executed entries nothing fetches. Cortex hardcodes its own list; the Tutor app reads this one.</div></div><a class="btn sm" href="#tools">Review</a></li>
+            <li><span class="stripe"></span><div><b>web_search</b> is registered twice with the same schema (job2cool, tutor).<div class="why">One record offered to both apps once shared tools land (spec §4.4).</div></div><a class="btn sm" href="#tool-web_search">Merge</a></li>
+            <li><span class="stripe info"></span><div><b>pt_pt_style</b> names <code>search_knowledge_base</code>, which its app <code>slides</code> is not offered.<div class="why">Either offer the tool to slides or drop it from the skill.</div></div><a class="btn sm" href="#skills">Fix</a></li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Recent activity <span class="example">example</span></h3>
+          <div class="tablewrap" style="border:0"><table id="recent"><thead><tr><th>Time</th><th>App</th><th>Tool</th><th>On behalf of</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+          <p style="margin:12px 0 0"><a href="#activity">All activity →</a></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOOLS -->
+    <section id="view-tools">
+      <div class="view-head">
+        <div><h2>Tools</h2><p>Every tool the service offers, by app. Select a row for its schema, a Try it form, connection snippets, its calls and its history.</p></div>
+        <button class="btn primary" id="newtool">+ New tool</button>
+      </div>
+      <div class="toolbar">
+        <input class="field" id="q" type="search" placeholder="Filter by name, description, impl, app  ( / )" aria-label="Filter tools">
+        <div class="chips" id="appchips"></div>
+        <button class="chip" id="enabledonly" aria-pressed="false">enabled only</button>
+      </div>
+      <div class="tablewrap">
+        <table id="tooltable">
+          <thead><tr><th>Name</th><th>Apps</th><th>Tier</th><th>Exec</th><th>Impl</th><th>Last used</th><th class="num">Calls 24 h</th><th>Enabled</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="hint" style="margin-top:8px">Last used and calls are examples until the invocation record exists. Rows with "never" are the hygiene signal the Overview reports.</p>
+    </section>
+
+    <!-- SKILLS -->
+    <section id="view-skills">
+      <div class="view-head">
+        <div><h2>Skills</h2><p>Instructions several consumers must apply the same way, owned here and versioned. App-tuned system prompts stay in their apps. Served over MCP as prompts and as <code>skill://</code> resources.</p></div>
+        <button class="btn primary">+ New skill</button>
+      </div>
+      <div class="tablewrap">
+        <table id="skilltable">
+          <thead><tr><th>Name</th><th>Apps</th><th>Tags</th><th>Expects tools</th><th class="num">Version</th><th>Updated</th><th>Enabled</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="hint" style="margin-top:8px"><span class="example">example skills</span> The catalog is empty today. These three are the starters the specification proposes (§4.7).</p>
+    </section>
+
+    <!-- APPS -->
+    <section id="view-apps">
+      <div class="view-head">
+        <div><h2>Apps</h2><p>An app's capability surface: its endpoint, its keys, what it is offered, and what it called. Keys are shown once at creation and stored as fingerprints.</p></div>
+      </div>
+      <div class="appcards" id="appcards"></div>
+    </section>
+
+    <!-- ACTIVITY -->
+    <section id="view-activity">
+      <div class="view-head">
+        <div><h2>Activity</h2><p>Every invocation: who, for which app, on whose behalf, how long, with what outcome. Retained 90 days. <span class="example">example rows</span></p></div>
+        <button class="btn">Export CSV</button>
+      </div>
+      <div class="toolbar">
+        <div class="chips"><button class="chip" aria-pressed="true">24 h</button><button class="chip">7 d</button><button class="chip">30 d</button></div>
+        <select class="field" aria-label="App"><option>all apps</option><option>tutor</option><option>agent_runtime</option><option>sdlc</option><option>job2cool</option><option>factory</option></select>
+        <select class="field" aria-label="Status"><option>any status</option><option>ok</option><option>error</option></select>
+        <input class="field" type="search" placeholder="caller, person, error text" aria-label="Search activity">
+      </div>
+      <div class="summary"><span><b class="num">318</b> calls</span><span><b class="num" style="color:var(--bad)">7</b> errors</span><span><b class="num">1.9 s</b> p95</span><span><b>web_search</b> most called</span></div>
+      <div class="tablewrap">
+        <table id="acttable">
+          <thead><tr><th>Time</th><th>App</th><th>Tool</th><th>Caller</th><th>On behalf of</th><th>Via</th><th class="num">Duration</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings">
+      <div class="view-head"><div><h2>Settings</h2><p>Implementations and what binds to them, backends, the auth mode, and export.</p></div></div>
+      <div class="two">
+        <div class="card">
+          <h3>Implementations · 9</h3>
+          <div class="tablewrap" style="border:0"><table class="impls"><thead><tr><th>Impl</th><th>Bound tools</th><th>Depends on</th></tr></thead><tbody>
+            <tr><td>web_search</td><td>web_search <span class="muted">(job2cool, tutor)</span></td><td><i class="dot ok"></i> websearch_server</td></tr>
+            <tr><td>fetch_url</td><td>fetch_url <span class="muted">(job2cool, agent_runtime)</span></td><td>outbound HTTP</td></tr>
+            <tr><td>newsapi_search</td><td>newsapi_search</td><td><i class="dot ok"></i> NewsAPI key set</td></tr>
+            <tr><td>sdlc_collect_evidence</td><td>sdlc_collect_evidence</td><td><i class="dot ok"></i> jenkins · /sdlc mounts</td></tr>
+            <tr><td>sdlc_score_cell</td><td>sdlc_score_cell</td><td>/sdlc/ro</td></tr>
+            <tr><td>sdlc_state</td><td>sdlc_state</td><td>/sdlc/rw</td></tr>
+            <tr><td>sdlc_advise</td><td>sdlc_advise</td><td>/sdlc/ro</td></tr>
+            <tr><td>sdlc_answer</td><td>sdlc_answer</td><td>/sdlc/rw</td></tr>
+            <tr><td>nginx_register_app</td><td>nginx_register_app</td><td><i class="dot ok"></i> proxy_server · docker.sock</td></tr>
+          </tbody></table></div>
+          <p class="hint" style="margin-top:8px">No orphan records. No unused implementations.</p>
+        </div>
+        <div class="card">
+          <h3>Auth and retention</h3>
+          <dl class="kv">
+            <dt>Admin token</dt><dd><span class="pill ok">set</span> writes require it</dd>
+            <dt>App keys</dt><dd><span class="pill warn">optional</span> MCP_REQUIRE_KEYS=0 · write-tier still requires a key</dd>
+            <dt>Record args</dt><dd><span class="pill server">off</span> digests only</dd>
+            <dt>Retention</dt><dd>90 days · pruned daily 03:00</dd>
+            <dt>Public path</dt><dd><code>/mcp-console/</code> · admin only via oauth2-proxy</dd>
+          </dl>
+          <h3 style="margin-top:16px">Export</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Registry JSON</button><button class="btn">Registry · one app</button><button class="btn">Activity CSV</button><button class="btn">Import (dry run)</button></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- DRAWER -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Tool detail" aria-hidden="true">
+  <div class="drawer-head">
+    <div class="title">
+      <h2 id="d-name">web_search</h2>
+      <span class="pill read" id="d-tier">read</span>
+      <span class="pill server" id="d-exec">server</span>
+      <button class="btn sm close" id="close">Close</button>
+    </div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button role="tab" aria-selected="true" data-tab="t-overview">Overview</button>
+      <button role="tab" data-tab="t-schema">Schema</button>
+      <button role="tab" data-tab="t-try">Try it</button>
+      <button role="tab" data-tab="t-connect">Connect</button>
+      <button role="tab" data-tab="t-activity">Activity</button>
+      <button role="tab" data-tab="t-history">History</button>
+    </div>
+  </div>
+  <div class="drawer-body">
+    <div role="tabpanel" id="t-overview" class="active">
+      <p id="d-desc" style="margin:0"></p>
+      <dl class="kv">
+        <dt>Offered to</dt><dd id="d-apps"></dd>
+        <dt>Endpoints</dt><dd id="d-endpoints" class="mono"></dd>
+        <dt>Implementation</dt><dd id="d-impl"></dd>
+        <dt>Annotations</dt><dd id="d-annot"></dd>
+        <dt>Updated</dt><dd id="d-updated"></dd>
+      </dl>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="toggle" aria-checked="true" aria-label="Enabled"></button><span>Enabled</span>
+        <button class="btn sm" style="margin-left:auto">Edit</button><button class="btn sm danger">Delete</button>
+      </div>
+    </div>
+    <div role="tabpanel" id="t-schema">
+      <div class="label" style="display:flex;justify-content:space-between;align-items:center"><h3>Input schema</h3><button class="btn sm">Raw JSON</button></div>
+      <div class="tablewrap"><table class="proptable"><thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr></thead><tbody id="d-props"></tbody></table></div>
+      <p class="hint">Output schema: none declared. Results are returned as text.</p>
+    </div>
+    <div role="tabpanel" id="t-try">
+      <div class="form" id="d-form"></div>
+      <div id="d-confirm" class="confirm" hidden><span>This is a <b>write-tier</b> tool. Running it changes the domain proxy's configuration.</span> <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="d-ack"> I understand, run it against <code id="d-confirm-app"></code></label></div>
+      <div style="display:flex;gap:8px"><button class="btn primary" id="d-run">Run</button><button class="btn" id="d-copycurl">Copy as curl</button></div>
+      <div class="result" id="d-result" hidden>
+        <div class="meta"><span class="pill ok">200</span><span class="num">1.42 s</span><span>via console · recorded as caller <code>console</code></span></div>
+        <pre id="d-resultpre"></pre>
+      </div>
+    </div>
+    <div role="tabpanel" id="t-connect">
+      <p class="hint" style="margin:0">Snippets for app <code id="d-connect-app">tutor</code>. Paste an app key in the bar to fill the placeholder.</p>
+      <div class="snip"><div class="label"><span class="eyebrow">curl · REST invoke</span><button class="btn sm" data-copy="s1">Copy</button></div><pre id="s1"></pre></div>
+      <div class="snip"><div class="label"><span class="eyebrow">Claude Code</span><button class="btn sm" data-copy="s2">Copy</button></div><pre id="s2"></pre></div>
+      <div class="snip"><div class="label"><span class="eyebrow">Claude Desktop · mcpServers</span><button class="btn sm" data-copy="s3">Copy</button></div><pre id="s3"></pre></div>
+      <div class="snip"><div class="label"><span class="eyebrow">Python · httpx</span><button class="btn sm" data-copy="s4">Copy</button></div><pre id="s4"></pre></div>
+    </div>
+    <div role="tabpanel" id="t-activity">
+      <p class="hint" style="margin:0"><span class="example">example</span> Last 50 calls of this tool.</p>
+      <div class="tablewrap"><table><thead><tr><th>Time</th><th>App</th><th>Caller</th><th>On behalf of</th><th class="num">Duration</th><th>Status</th></tr></thead><tbody id="d-act"></tbody></table></div>
+    </div>
+    <div role="tabpanel" id="t-history">
+      <ul class="versions">
+        <li><b>v3</b><span class="muted">2026-10-10 · console · 7a1c9e02</span><span class="pill server">current</span></li>
+        <li><b>v2</b><span class="muted">2026-06-24 · console · 7a1c9e02</span><button class="btn sm">Restore</button></li>
+        <li><b>v1</b><span class="muted">2026-06-13 · seed</span><button class="btn sm">Restore</button></li>
+      </ul>
+      <h3>v2 → v3</h3>
+      <div class="diff">
+        <div> "description": "Search the web and return titles, URLs and snippets.</div>
+        <div class="del">-  Backed by a stealth browser (Camoufox) in the isolated websearch service."</div>
+        <div class="add">+  Backed by a stealth browser (Camoufox) in the isolated websearch service. Use only when the answer is outside the knowledge base."</div>
+        <div class="del">- "apps": ["job2cool"]</div>
+        <div class="add">+ "apps": ["job2cool", "tutor"]</div>
+      </div>
+    </div>
+  </div>
+</aside>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function () {
+  // ── data: the live registry on 2026-10-10 (names, apps, tiers, impls, exec); call figures are examples ──
+  const T = [
+    ['web_search','job2cool,tutor','read','server','web_search','Search the web and return titles, URLs and snippets. Backed by a stealth browser (Camoufox) in the isolated websearch service.','12 min ago',141],
+    ['fetch_url','job2cool,agent_runtime','read','server','fetch_url','Fetch the content of a web URL. Returns the page text (HTML stripped to readable text).','1 h ago',63],
+    ['newsapi_search','agent_runtime','read','server','newsapi_search','Search NewsAPI for recent articles matching a keyword or phrase, newest first within a recent window.','3 h ago',22],
+    ['nginx_register_app','factory','write','server','nginx_register_app','Put a generated app on the domain nginx behind the shared oauth2-proxy: writes a managed location block, validates (nginx -t, rolling back on failure) and reloads.','2 d ago',1],
+    ['sdlc_collect_evidence','sdlc','read','server','sdlc_collect_evidence','Collect the evidence for one (project, cell) from its sensor: deployments, lead time, recovery time, tests, ADRs.','yesterday',18],
+    ['sdlc_score_cell','sdlc','read','server','sdlc_score_cell','Score a cell deterministically against its published bands.','yesterday',18],
+    ['sdlc_state','sdlc','write','server','sdlc_state','Write the assessment state for a project and cell, atomically, as one JSON document.','yesterday',18],
+    ['sdlc_advise','sdlc','read','server','sdlc_advise','Advice for the next maturity step of a cell, from the knowledge base.','yesterday',9],
+    ['sdlc_answer','sdlc','write','server','sdlc_answer','Record an attested answer from the SDLC wall for a cell.','3 d ago',4],
+    ['next_question','tutor','write','client','client_ui','Advance to the next question in the current package and show it.','never',0],
+    ['previous_question','tutor','write','client','client_ui','Go back to the previous question in the current package and show it.','never',0],
+    ['goto_question','tutor','write','client','client_ui','Jump to a specific question by its 1-based number within the current package.','never',0],
+    ['open_package','tutor','write','client','client_ui','Open a question package by its id.','never',0],
+    ['get_current_state','tutor','read','client','client_ui','What the student is looking at: package, current question, whether answered.','never',0],
+    ['get_progress','tutor','read','client','client_ui','The student\'s progress in the current package.','never',0],
+    ['submit_answer','tutor','write','client','client_ui','Grade the answer the student states; deterministic against the package key.','never',0],
+    ['get_grounding','tutor','read','client','client_ui','The source passages the current question was written from.','never',0],
+    ['get_mastery','tutor','read','client','client_ui','Per-concept mastery for the current package.','never',0],
+    ['next_best_question','tutor','write','client','client_ui','Adaptively navigate to the best next question.','never',0],
+  ].map(r => ({name:r[0], apps:r[1].split(','), tier:r[2], exec:r[3], impl:r[4], desc:r[5], last:r[6], calls:r[7], enabled:true}));
+  // the registry has 21 records; two are the per-app duplicates of web_search and fetch_url merged above
+  const SCHEMAS = {
+    web_search: [['query','string',true,'','The web search query'],['max_results','integer',false,'5','Maximum results to return (1–25)']],
+    fetch_url: [['url','string',true,'','The URL to fetch'],['max_chars','integer',false,'10000','Truncate the text at this many characters']],
+    newsapi_search: [['query','string',true,'','Keyword or phrase'],['page_size','integer',false,'20','Articles per page'],['days','integer',false,'3','How many days back']],
+    nginx_register_app: [['suffix','string',true,'','URL path the app is served at'],['port','integer',false,'','The app\'s deployed host port'],['admin_only','boolean',false,'false','Gate to the owner identity'],['public','boolean',false,'false','Serve the base path without auth'],['admin_prefix','string',false,'','Nested path that is gated'],['unregister','boolean',false,'false','Remove the route instead']],
+  };
+  const SKILLS = [
+    {name:'cite_with_tag', apps:['tutor','slides'], tags:['citation','knowledge-base'], tools:['search_knowledge_base','kb_search'], v:3, updated:'2026-10-08', desc:'Cite a knowledge-base passage with its tag exactly as returned, so the page can turn it into a button.'},
+    {name:'pt_pt_style', apps:['tutor','slides','agent_runtime'], tags:['language'], tools:['search_knowledge_base'], v:1, updated:'2026-10-02', desc:'Write European Portuguese: forms used in Portugal, never Brazilian ones; keep product names as the organisation writes them.'},
+    {name:'ai_generated_disclosure', apps:['job2cool','agent_runtime'], tags:['accountability'], tools:[], v:2, updated:'2026-09-30', desc:'State once, plainly, that the answer was generated by a model and must be checked before it is relied on.'},
+  ];
+  const APPS = [
+    {name:'tutor', tools:11, skills:2, keys:[['cortex-learning','2026-10-02','2027-01-01','12 min ago']], calls:141, err:2, top:'web_search'},
+    {name:'agent_runtime', tools:2, skills:2, keys:[['daily-digest','2026-09-20','2026-12-19','3 h ago']], calls:85, err:3, top:'fetch_url'},
+    {name:'sdlc', tools:5, skills:0, keys:[['sdlc-wall','2026-09-28','2026-12-27','yesterday']], calls:67, err:0, top:'sdlc_collect_evidence'},
+    {name:'job2cool', tools:2, skills:1, keys:[['job2cool-backend','2026-06-13','2026-12-10','4 d ago']], calls:24, err:2, top:'web_search'},
+    {name:'factory', tools:1, skills:0, keys:[], calls:1, err:0, top:'nginx_register_app'},
+  ];
+  const PEOPLE = ['ana.costa@bancoctt.pt','rui.m@bancoctt.pt','—','joana.p@bancoctt.pt','—'];
+  const ACT = []; let seed = 7;
+  const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  const live = T.filter(t => t.exec === 'server' && t.name !== 'nginx_register_app');
+  for (let i = 0; i < 40; i++) {
+    const t = live[Math.floor(rnd() * live.length)]; const app = t.apps[Math.floor(rnd() * t.apps.length)];
+    const ok = rnd() > 0.045; const mins = Math.floor(i * 36 + rnd() * 30);
+    ACT.push({time: ago(mins), app, tool: t.name, caller: APPS.find(a => a.name === app)?.keys[0]?.[0] || 'anonymous', person: app === 'tutor' ? PEOPLE[Math.floor(rnd()*4)] : '—', via: rnd() > .3 ? 'mcp' : 'rest', dur: (0.2 + rnd() * 2.4).toFixed(2) + ' s', ok, err: ok ? '' : (t.name === 'web_search' ? 'websearch 504: upstream timeout' : 'invalid_arguments at /max_results')});
+  }
+  ACT.push({time: '2 d ago', app: 'factory', tool: 'nginx_register_app', caller: 'anonymous', person: '—', via: 'rest', dur: '1.81 s', ok: true, err: ''});
+  function ago(m) { if (m < 60) return m + ' min ago'; const h = Math.floor(m / 60); return h < 24 ? h + ' h ago' : Math.floor(h / 24) + ' d ago'; }
+  const esc = s => String(s).split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;').split('"').join('&quot;');
+  const pillApps = apps => '<span class="apps">' + apps.map(a => `<span class="pill app">${esc(a)}</span>`).join('') + '</span>';
+  const $ = id => document.getElementById(id);
+
+  // ── navigation ──
+  const views = ['overview','tools','skills','apps','activity','settings'];
+  function show(view) {
+    views.forEach(v => { $('view-' + v).classList.toggle('active', v === view); });
+    document.querySelectorAll('.menu a').forEach(a => { if (a.dataset.view === view) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    window.scrollTo(0, 0);
+  }
+  function route() {
+    const h = (location.hash || '#overview').slice(1);
+    if (h.startsWith('tool-')) { show('tools'); openTool(h.slice(5)); return; }
+    if (h.startsWith('try-')) { show('tools'); openTool(h.slice(4)); selectTab('t-try'); return; }
+    if (h.startsWith('connect-')) { show('tools'); openTool(h.slice(8)); selectTab('t-connect'); return; }
+    if (h.startsWith('app-')) { show('apps'); return; }
+    show(views.includes(h) ? h : 'overview');
+  }
+  window.addEventListener('hashchange', route);
+
+  // ── overview ──
+  $('recent').tBodies[0].innerHTML = ACT.slice(0, 8).map(r => `<tr><td class="muted time">${r.time}</td><td><span class="pill app">${r.app}</span></td><td class="mono">${r.tool}</td><td class="muted">${esc(r.person)}</td><td>${r.ok ? '<span class="pill ok">ok</span>' : `<span class="pill err" title="${esc(r.err)}">error</span>`}</td></tr>`).join('');
+
+  // ── tools ──
+  let appFilter = null, enabledOnly = false, q = '';
+  const appNames = [...new Set(T.flatMap(t => t.apps))];
+  $('appchips').innerHTML = ['all apps', ...appNames].map(a => `<button class="chip" data-app="${a === 'all apps' ? '' : a}" aria-pressed="${a === 'all apps'}">${a}</button>`).join('');
+  $('appchips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; appFilter = b.dataset.app || null; [...$('appchips').children].forEach(c => c.setAttribute('aria-pressed', c === b)); renderTools(); });
+  $('enabledonly').addEventListener('click', e => { enabledOnly = !enabledOnly; e.currentTarget.setAttribute('aria-pressed', enabledOnly); renderTools(); });
+  $('q').addEventListener('input', e => { q = e.target.value.toLowerCase(); renderTools(); });
+  function renderTools() {
+    const rows = T.filter(t => (!appFilter || t.apps.includes(appFilter)) && (!enabledOnly || t.enabled) && (!q || [t.name, t.desc, t.impl, t.apps.join(' ')].join(' ').toLowerCase().includes(q)));
+    $('tooltable').tBodies[0].innerHTML = rows.map(t => `<tr data-name="${t.name}" aria-selected="${t.name === current}">
+      <td class="name">${t.name}<span class="desc">${esc(t.desc)}</span></td><td>${pillApps(t.apps)}</td>
+      <td><span class="pill ${t.tier}">${t.tier}</span></td><td><span class="pill ${t.exec}">${t.exec}</span></td>
+      <td class="mono muted">${t.impl}</td><td class="${t.last === 'never' ? 'never' : 'muted'}">${t.last}</td><td class="num">${t.calls}</td>
+      <td><button class="toggle" aria-checked="${t.enabled}" aria-label="Enabled" data-toggle="${t.name}"></button></td></tr>`).join('');
+  }
+  $('tooltable').addEventListener('click', e => {
+    const tg = e.target.closest('[data-toggle]');
+    if (tg) { e.stopPropagation(); const t = T.find(x => x.name === tg.dataset.toggle); t.enabled = !t.enabled; tg.setAttribute('aria-checked', t.enabled); toast(`${t.name} ${t.enabled ? 'enabled' : 'disabled'} — PATCH /tools/${t.name}/enabled`); return; }
+    const tr = e.target.closest('tr[data-name]'); if (tr) location.hash = 'tool-' + tr.dataset.name;
+  });
+
+  // ── drawer ──
+  let current = null;
+  function openTool(name) {
+    const t = T.find(x => x.name === name); if (!t) return;
+    current = name; renderTools();
+    $('d-name').textContent = t.name; $('d-desc').textContent = t.desc;
+    $('d-tier').className = 'pill ' + t.tier; $('d-tier').textContent = t.tier;
+    $('d-exec').className = 'pill ' + t.exec; $('d-exec').textContent = t.exec;
+    $('d-apps').innerHTML = pillApps(t.apps);
+    $('d-endpoints').innerHTML = t.apps.map(a => `/mcp/${a}/ · POST /tools/${t.name}/invoke?app=${a}`).join('<br>');
+    $('d-impl').innerHTML = t.exec === 'client' ? `<code>${t.impl}</code> · executed by the app's page, never here` : `<code>${t.impl}</code> · <i class="dot ok"></i> backend reachable`;
+    $('d-annot').innerHTML = t.tier === 'read' ? '<code>readOnlyHint: true</code>' : `<code>readOnlyHint: false</code> · <code>destructiveHint: ${t.name === 'nginx_register_app'}</code>`;
+    $('d-updated').textContent = '2026-10-10 · v3 · by console 7a1c9e02';
+    const props = SCHEMAS[t.name] || [];
+    $('d-props').innerHTML = props.length ? props.map(p => `<tr><td class="mono">${p[0]}</td><td>${p[1]}</td><td>${p[2] ? 'yes' : ''}</td><td class="mono">${esc(p[3])}</td><td class="muted">${esc(p[4])}</td></tr>`).join('') : '<tr><td colspan="5" class="muted">No properties: this tool takes no arguments.</td></tr>';
+    $('d-form').innerHTML = props.length ? props.map(p => `<label>${p[0]}${p[2] ? ' *' : ''}${p[1] === 'boolean' ? `<select class="field"><option>false</option><option>true</option></select>` : `<input class="field" type="${p[1] === 'integer' ? 'number' : 'text'}" placeholder="${esc(p[3] || p[4])}" value="${p[0] === 'query' ? 'kubernetes operator pattern' : p[0] === 'url' ? 'https://example.com' : ''}">`}<span class="hint">${esc(p[4])}</span></label>`).join('') : '<p class="hint">No arguments. Run calls the tool with an empty object.</p>';
+    $('d-confirm').hidden = t.tier !== 'write'; $('d-confirm-app').textContent = t.apps[0]; $('d-ack').checked = false;
+    $('d-result').hidden = true;
+    const app = t.apps[0]; $('d-connect-app').textContent = app;
+    const base = 'https://logus2k.com/mcp-service';
+    $('s1').textContent = `curl -s -X POST ${base}/tools/${t.name}/invoke?app=${app} \\\n  -H 'Authorization: Bearer mcpk_…' -H 'X-On-Behalf-Of: ana.costa@bancoctt.pt' \\\n  -H 'content-type: application/json' -d '{"args": {"query": "kubernetes operator pattern"}}'`;
+    $('s2').textContent = `claude mcp add --transport http ${app} ${base}/mcp/${app}/ \\\n  --header "Authorization: Bearer mcpk_…"`;
+    $('s3').textContent = JSON.stringify({mcpServers: {[app]: {type: 'http', url: `${base}/mcp/${app}/`, headers: {Authorization: 'Bearer mcpk_…'}}}}, null, 2);
+    $('s4').textContent = `r = httpx.post(f"{BASE}/tools/${t.name}/invoke", params={"app": "${app}"},\n               headers={"Authorization": f"Bearer {KEY}", "X-On-Behalf-Of": user},\n               json={"args": args}, timeout=60)\nr.raise_for_status(); result = r.json()["result"]`;
+    $('d-act').innerHTML = ACT.filter(r => r.tool === t.name).slice(0, 8).map(r => `<tr><td class="muted time">${r.time}</td><td><span class="pill app">${r.app}</span></td><td class="mono">${r.caller}</td><td class="muted">${esc(r.person)}</td><td class="num">${r.dur}</td><td>${r.ok ? '<span class="pill ok">ok</span>' : `<span class="pill err">error</span>`}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">No calls recorded for this tool.</td></tr>';
+    $('drawer').classList.add('open'); $('drawer').setAttribute('aria-hidden', 'false'); $('scrim').style.display = 'block';
+    selectTab('t-overview');
+  }
+  function closeDrawer() { $('drawer').classList.remove('open'); $('drawer').setAttribute('aria-hidden', 'true'); $('scrim').style.display = 'none'; current = null; renderTools(); if (location.hash.startsWith('#tool-')) history.replaceState(null, '', '#tools'); }
+  $('close').addEventListener('click', closeDrawer); $('scrim').addEventListener('click', closeDrawer);
+  function selectTab(id) { document.querySelectorAll('#tabs [role=tab]').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === id)); document.querySelectorAll('.drawer-body [role=tabpanel]').forEach(p => p.classList.toggle('active', p.id === id)); }
+  $('tabs').addEventListener('click', e => { const b = e.target.closest('[role=tab]'); if (b) selectTab(b.dataset.tab); });
+  $('d-run').addEventListener('click', () => {
+    const t = T.find(x => x.name === current);
+    if (t.tier === 'write' && !$('d-ack').checked) { toast('Tick the confirmation to run a write-tier tool'); return; }
+    $('d-resultpre').textContent = t.name === 'web_search'
+      ? JSON.stringify({query: 'kubernetes operator pattern', results: [{title: 'Operator pattern | Kubernetes', url: 'https://kubernetes.io/docs/concepts/extend-kubernetes/operator/', snippet: 'Operators are software extensions to Kubernetes that make use of custom resources to manage applications…'}, {title: 'Kubernetes Operators Explained', url: 'https://www.redhat.com/en/topics/containers/what-is-a-kubernetes-operator', snippet: 'A Kubernetes operator is a method of packaging, deploying, and managing a Kubernetes application…'}]}, null, 2)
+      : '{ "result": "…" }  (example: the real console shows the tool\'s own answer here)';
+    $('d-result').hidden = false;
+  });
+  $('d-copycurl').addEventListener('click', () => copy($('s1').textContent));
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => copy($(b.dataset.copy).textContent)));
+  function copy(text) { (navigator.clipboard?.writeText(text) || Promise.reject()).then(() => toast('Copied'), () => toast('Select the text to copy it')); }
+  $('newtool').addEventListener('click', () => toast('Opens the editor drawer: name, apps, tier, impl from IMPLS, schema with validation, diff before Save'));
+
+  // ── skills ──
+  $('skilltable').tBodies[0].innerHTML = SKILLS.map(s => `<tr><td class="name">${s.name}<span class="desc">${esc(s.desc)}</span></td><td>${pillApps(s.apps)}</td><td><span class="apps">${s.tags.map(t => `<span class="pill tag">${t}</span>`).join('')}</span></td><td class="mono muted">${s.tools.join(', ') || '—'}</td><td class="num">v${s.v}</td><td class="muted time">${s.updated}</td><td><button class="toggle" aria-checked="true" aria-label="Enabled"></button></td></tr>`).join('')
+    + `<tr><td colspan="7" style="cursor:default"><div class="editor"><div class="form"><label>cite_with_tag · content (Markdown) · v3<textarea class="field" style="height:auto">When you use a passage returned by {{kb_tool}}, cite it inline with its tag exactly as returned, e.g. [markdown_chunk:3f9a…]. Never invent a tag, never put a training or document id inside a tag, and never cite what you did not read.</textarea></label><label>arguments<input class="field" value="kb_tool · the search tool's name · optional"></label><div style="display:flex;gap:8px"><button class="btn primary sm">Save (shows diff)</button><button class="btn sm">Try prompts/get</button></div></div><div><div class="eyebrow" style="margin-bottom:6px">Preview · as a client receives it</div><div class="preview"><p>When you use a passage returned by <code>search_knowledge_base</code>, cite it inline with its tag exactly as returned, e.g. <code>[markdown_chunk:3f9a…]</code>.</p><p>Never invent a tag, never put a training or document id inside a tag, and never cite what you did not read.</p><p class="hint">Also served as resource <code>skill://cite_with_tag</code> · offered to tutor, slides</p></div></div></div></td></tr>`;
+
+  // ── apps ──
+  $('appcards').innerHTML = APPS.map(a => `<div class="appcard" id="app-${a.name}">
+    <div class="head"><h3>${a.name}</h3>${a.keys.length ? '<span class="pill ok">key active</span>' : '<span class="pill warn">no key</span>'}<button class="btn sm" style="margin-left:auto">Connect</button></div>
+    <div class="mono muted" style="font-size:12px">/mcp/${a.name}/ · /tools?app=${a.name}</div>
+    <div class="stats"><div><b class="num">${a.tools}</b><span>tools</span></div><div><b class="num">${a.skills}</b><span>skills</span></div><div><b class="num">${a.calls}</b><span>calls 24 h · ${a.err} err</span></div></div>
+    <div class="keys"><div class="eyebrow">Keys</div>${a.keys.map(k => `<div><code>${k[0]}</code><span class="muted">created ${k[1]} · expires ${k[2]} · used ${k[3]}</span><button class="btn sm danger">Revoke</button></div>`).join('') || '<div class="muted">None. Calls from this app are recorded as anonymous.</div>'}<div><button class="btn sm">+ New key</button></div></div>
+    ${a.name === 'tutor' ? '<div class="ext"><div class="eyebrow" style="margin-bottom:4px">External servers</div><a href="#">Cortex knowledge base · /cortex/mcp/</a> <span class="muted">· Cortex\'s own keys (Developer SDK)</span></div>' : ''}
+  </div>`).join('');
+
+  // ── activity ──
+  $('acttable').tBodies[0].innerHTML = ACT.map(r => `<tr><td class="muted" style="white-space:nowrap">${r.time}</td><td><span class="pill app">${r.app}</span></td><td class="mono">${r.tool}</td><td class="mono muted">${r.caller}</td><td class="muted">${esc(r.person)}</td><td><span class="pill server">${r.via}</span></td><td class="num">${r.dur}</td><td>${r.ok ? '<span class="pill ok">ok</span>' : `<span class="pill err">error</span> <span class="muted" style="font-size:12px">${esc(r.err)}</span>`}</td></tr>`).join('');
+
+  // ── theme, keys, toast ──
+  $('theme').addEventListener('click', () => { const r = document.documentElement; const dark = r.dataset.theme === 'dark' || (!r.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches); r.dataset.theme = dark ? 'light' : 'dark'; });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); show('tools'); $('q').focus(); } });
+  let tt; function toast(m) { $('toast').textContent = m; $('toast').classList.add('show'); clearTimeout(tt); tt = setTimeout(() => $('toast').classList.remove('show'), 2200); }
+
+  history.scrollRestoration = 'manual'; renderTools(); route();
+})();
+</script>
+</body>
+</html>

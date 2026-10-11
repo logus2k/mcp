@@ -1,5 +1,13 @@
 # mcp-service — Implementation Plan
 
+> **Status 2026-10-10:** phases 1 to 5 below were delivered by the first admin page, and
+> phase 6 (metrics) plus everything after it by the implementation of
+> [console_specification.md](console_specification.md): app keys, the invocation
+> record, validation, shared tools, history and restore, the MCP features, the skills
+> model, the Console, the test suite, the public path and the consumer changes. This file
+> is kept as the record of how the admin page was sequenced; the specification's
+> section 8 is the current delivery table.
+
 Turns the capability roadmap in [technical_architecture.md](technical_architecture.md)
 §5 into concrete, sequenced, executable phases. Each phase is independently
 shippable, lists the files it touches, and has explicit acceptance criteria.

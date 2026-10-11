@@ -6,3 +6,11 @@ secrets.env.bak-*
 # this machine only: its compose override and settings (never committed)
 docker-compose.local.yml
 .env
+# operational data written by the container (console_specification.md): never commit
+data/activity.db
+data/activity.db-wal
+data/activity.db-shm
+data/keys.json
+data/history.json
+data/migration_report.json
+data/oauth_signing.key
