@@ -14,6 +14,7 @@ The domain's shared **tool and skill host**, with two faces and a console:
 
 Design and rules: [documents/console_specification.md](documents/console_specification.md).
 Architecture: [documents/technical_architecture.md](documents/technical_architecture.md).
+Identity and access (people, applications, agents): [documents/identity_and_access.md](documents/identity_and_access.md).
 
 ## Model
 - **Tools** are declarative catalog entries (name, JSON Schema, which built-in `impl`,
